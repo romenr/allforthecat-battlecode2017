@@ -1,0 +1,36 @@
+/matches
+/deploy/lib
+/deploy/bin
+*.rms
+*.bc17
+/build/
+/bin/
+*.conf
+.DS_Store
+*.log
+*.swp
+*.pyc
+.gradle
+/client/
+*.jar
+*.iml
+*.ipr
+*.iws
+/.idea/
+/.gradle
+/.settings
+README.md
+build.gradle
+/gradle
+gradlew
+gradlew.bat
+*.hprof
+
+
+# User-specific stuff:
+battlecode-scaffold.iws
+
+# Eclipse user-specific files
+.classpath
+.project
+.settings/
