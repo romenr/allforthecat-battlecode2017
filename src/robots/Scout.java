@@ -13,6 +13,7 @@ import battlecode.common.TreeInfo;
 import static thecat.RobotPlayer.rc;
 import static gamemechanics.Broadcast.ENEMY_LOCATION;
 import static gamemechanics.Util.*;
+import static gamemechanics.Debug.*;
 
 public strictfp class Scout {
 

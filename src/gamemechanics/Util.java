@@ -1,8 +1,7 @@
 package gamemechanics;
 
-import static gamemechanics.Util.acrd;
-import static gamemechanics.Util.debug_println;
 import static thecat.RobotPlayer.rc;
+import static gamemechanics.Debug.*;
 
 import java.util.Random;
 
@@ -49,16 +48,6 @@ public strictfp class Util {
 		int x = code >> 10;
 		int y = code & 0x3FF;
 		return new MapLocation(x, y);
-	}
-
-	/**
-	 * Print a Message to the Console
-	 * 
-	 * @param message
-	 *            the Message
-	 */
-	public static void debug_println(String message) {
-		System.out.println(message);
 	}
 
 	/**
