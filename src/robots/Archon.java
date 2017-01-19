@@ -4,6 +4,7 @@ import static thecat.RobotPlayer.rc;
 import static gamemechanics.Util.*;
 import static gamemechanics.NeutralTrees.*;
 import static gamemechanics.Broadcast.*;
+import static gamemechanics.Debug.*;
 
 import battlecode.common.Clock;
 import battlecode.common.Direction;
@@ -62,6 +63,8 @@ public strictfp class Archon {
 				}
 				
 				shakeBulletTree();
+				
+				debug_productionInfo();
 
 				// Clock.yield() makes the robot wait until the next turn, then
 				// it will perform this loop again

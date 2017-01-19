@@ -14,6 +14,7 @@ import static gamemechanics.Broadcast.*;
 import static thecat.RobotPlayer.rc;
 import static gamemechanics.Util.*;
 import static gamemechanics.NeutralTrees.*;
+import static gamemechanics.Debug.*;
 
 public strictfp class Gardener {
 
@@ -165,6 +166,8 @@ public strictfp class Gardener {
 						}
 					}
 				}
+				
+				debug_productionInfo();
 
 				// Clock.yield() makes the robot wait until the next turn, then
 				// it will perform this loop again
