@@ -34,10 +34,6 @@ public strictfp class Util {
 		if ((int) (rc.getTeamBullets() / 10) + rc.getTeamVictoryPoints() >= 1000) {
 			rc.donate(rc.getTeamBullets());
 		}
-
-		if (rc.getTeamBullets() >= 170) {
-			rc.donate(20);
-		}
 	}
 
 	public static int encode(MapLocation location) {

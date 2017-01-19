@@ -14,6 +14,7 @@ import battlecode.common.RobotInfo;
 public strictfp class Archon {
 
 	public static int numberGardeners = 6;
+	public static final int START_BUYING_VICTORY_POINTS_TURN = 200;
 
 	public static void run() throws GameActionException {
 
@@ -26,6 +27,13 @@ public strictfp class Archon {
 			try {
 
 				checkWinCondition();
+				
+				// After a certain amount of turns start buying Victory Points with a overhead of Bullets
+				if(rc.getRoundNum() > START_BUYING_VICTORY_POINTS_TURN){
+					if (rc.getTeamBullets() >= 170) {
+						rc.donate(20);
+					}
+				}
 				
 				// The Archon that dose this Broadcast is the Leader
 				if (rc.readBroadcast(LEADER_CHANNEL) != rc.getRoundNum()) {
