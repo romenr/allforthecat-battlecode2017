@@ -33,24 +33,30 @@ public strictfp class Scout {
 			// robot to explode
 			try {
 				checkWinCondition();
-				
+
 				// Trees before Movement
 				debug_colorBulletTrees();
 				RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
 				if (robots.length > 0 && tryToKillEnemyScout(robots)) {
 					debug_println("Fight!");
 				} else if (robots.length > 0) {
-					if(robots.length >= 4 && rc.readBroadcast(ENEMY_LOCATION) == 0){
+					if (robots.length >= 4 && rc.readBroadcast(ENEMY_LOCATION) == 0) {
 						rc.broadcast(ENEMY_LOCATION, encode(robots[0].getLocation()));
 					}
-					
+
 					MapLocation myLocation = rc.getLocation();
 					MapLocation enemyLocation = robots[0].getLocation();
 					Direction toEnemy = myLocation.directionTo(enemyLocation);
 					int shootAt = 0;
 					switch (robots[0].type) {
 					case LUMBERJACK:
-						tryMove(toEnemy.opposite());
+						if (rc.getLocation().distanceTo(robots[0].getLocation()) < RobotType.LUMBERJACK.bodyRadius
+								+ RobotType.LUMBERJACK.strideRadius + GameConstants.LUMBERJACK_STRIKE_RADIUS
+								+ rc.getType().strideRadius + 0.01f) {
+							tryMove(toEnemy.opposite());
+						} else {
+							tryMove(toEnemy);
+						}
 						break;
 					case GARDENER:
 					case SCOUT:
@@ -64,9 +70,9 @@ public strictfp class Scout {
 					default:
 						break;
 					}
-					while(shootAt < robots.length){
+					while (shootAt < robots.length) {
 						Direction shootTo = rc.getLocation().directionTo(robots[shootAt].location);
-						if(!willCollideWithTree(shootTo)){
+						if (!willCollideWithTree(shootTo)) {
 							if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
 								rc.firePentadShot(shootTo);
 								break;
@@ -223,8 +229,6 @@ public strictfp class Scout {
 		}
 		return moved;
 	}
-
-	
 
 	/**
 	 * Color Trees within sight radius that Contain Bullets golden
