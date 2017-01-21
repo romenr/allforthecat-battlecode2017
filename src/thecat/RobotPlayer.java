@@ -6,11 +6,6 @@ import robots.*;
 public strictfp class RobotPlayer {
 	public static RobotController rc;
 
-	/*
-	 * Constants
-	 */
-	public static final float GARDEN_RADIUS = 3.5f;
-
 	/**
 	 * run() is the method that is called when a robot is instantiated in the
 	 * Battlecode world. If this method returns, the robot dies!
