@@ -68,7 +68,9 @@ public strictfp class Soldier {
 						if (rc.getLocation().distanceTo(robots[0].getLocation()) <= 6) {
 							tryMove(toEnemy);
 						} else {
-							dodge();
+							if(!dodge()){
+								tryMove(toEnemy);
+							}
 						}
 						break;
 					case ARCHON:

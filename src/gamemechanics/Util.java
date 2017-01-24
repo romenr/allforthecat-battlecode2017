@@ -3,6 +3,7 @@ package gamemechanics;
 import static thecat.RobotPlayer.rc;
 import static gamemechanics.Debug.*;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import battlecode.common.BodyInfo;
@@ -27,6 +28,51 @@ public strictfp class Util {
 	static MapLocation center = null;
 	static Direction explore = null;
 
+	// this is the slugs "tail" imagine leaving a trail of sticky goo on the map that you don't want to step in that slowly dissapates over time
+    static ArrayList<MapLocation> oldLocations = new ArrayList<MapLocation>();
+
+
+
+    public static boolean slugMoveToTarget(MapLocation target, float strideRadius) throws GameActionException{
+
+        // when trying to move, let's look forward, then incrementing left and right.
+        float[] toTry = {0, (float)Math.PI/4, (float)-Math.PI/4, (float)Math.PI/2, (float)-Math.PI/2, 3*(float)Math.PI/4, -3*(float)Math.PI/4, -(float)Math.PI};
+
+        MapLocation ourLoc = rc.getLocation();
+        Direction toMove = ourLoc.directionTo(target);
+
+        // let's try to find a place to move!
+        for (int i = 0; i < toTry.length; i++) {
+            Direction dirToTry = toMove.rotateRightDegrees(toTry[i]);
+            if (rc.canMove(dirToTry, strideRadius)) {
+                // if that location is free, let's see if we've already moved there before (aka, it's in our tail)
+                MapLocation newLocation = ourLoc.add(dirToTry, strideRadius);
+                boolean haveWeMovedThereBefore = false;
+                for (int j = 0; j < oldLocations.size(); j++) {
+                    if (newLocation.distanceTo(oldLocations.get(j)) < strideRadius * strideRadius) {
+                        haveWeMovedThereBefore = true;
+                        break;
+                    }
+                }
+                if (!haveWeMovedThereBefore) {
+                    oldLocations.add(newLocation);
+                    if (oldLocations.size() > 10) {
+                        // remove the head and chop the list down to size 10 (or whatever you want to use)
+                    	oldLocations.remove(0);
+                    }
+                    if (! rc.hasMoved() && rc.canMove(dirToTry, strideRadius)) {
+                        rc.move(dirToTry, strideRadius);
+                    }
+                    return(true);
+                }
+
+            }
+        }
+        //looks like we can't move anywhere
+        return(false);
+
+    }
+	
 	public static void checkWinCondition() throws GameActionException {
 		// Check if we can win now
 		if ((rc.getTeamBullets() / rc.getVictoryPointCost()) + rc.getTeamVictoryPoints() >= 1000) {
@@ -465,9 +511,9 @@ public strictfp class Util {
 				}
 			}
 		} else {
-			RobotInfo[] friends = rc.senseNearbyRobots(-1, team);
-			for (RobotInfo friend : friends) {
-				float when = willCollideWith(dir, location, friend);
+			RobotInfo[] robots = rc.senseNearbyRobots(-1, team);
+			for (RobotInfo robot : robots) {
+				float when = willCollideWith(dir, location, robot);
 				if (when > 0) {
 					return when;
 				}
@@ -488,9 +534,11 @@ public strictfp class Util {
 		float tree = willCollideWith(dir, location, Team.NEUTRAL);
 		if (enemy == 0)
 			return false;
-		if (ally == 0)
+		if (ally == 0 && tree == 0)
 			return true;
-		return enemy < ally && enemy <= tree;
+		if(ally == 0 && enemy <= tree)
+			return true;
+		return enemy < ally;
 	}
 
 	public static boolean canShootTriadTo(Direction dir) {

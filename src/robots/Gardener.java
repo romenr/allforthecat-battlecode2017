@@ -48,10 +48,15 @@ public strictfp class Gardener {
 				
 				// Starting strat
 				if(rc.getRoundNum() < 10 && rc.isBuildReady()){
-					tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18);
+					TreeInfo[] treeInfos = rc.senseNearbyTrees();
+					if(treeInfos.length > 4){
+						tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18);
+					}else{
+						tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18);
+					}
 				}
 				if(rc.getRoundNum() < 20 && rc.isBuildReady()){
-					tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18);
+					tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18);
 				}
 
 				if (!inGarden && rc.onTheMap(rc.getLocation(), GARDEN_SIZE)

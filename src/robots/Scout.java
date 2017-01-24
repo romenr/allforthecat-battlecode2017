@@ -14,6 +14,7 @@ import static thecat.RobotPlayer.rc;
 import static gamemechanics.Broadcast.ENEMY_LOCATION;
 import static gamemechanics.Util.*;
 import static gamemechanics.Debug.*;
+import static gamemechanics.NeutralTrees.shakeBulletTree;
 
 public strictfp class Scout {
 
@@ -37,11 +38,12 @@ public strictfp class Scout {
 
 				// Trees before Movement
 				debug_colorBulletTrees();
+				shakeBulletTree();
 				RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
 				if (robots.length > 0 && tryToKillEnemyScout(robots)) {
 					debug_println("Fight!");
 				} else if (robots.length > 0) {
-					if (robots.length >= 4 && rc.readBroadcast(ENEMY_LOCATION) == 0) {
+					if (rc.readBroadcast(ENEMY_LOCATION) == 0) {
 						rc.broadcast(ENEMY_LOCATION, encode(robots[0].getLocation()));
 					}
 
@@ -50,23 +52,19 @@ public strictfp class Scout {
 					Direction toEnemy = myLocation.directionTo(enemyLocation);
 					int shootAt = 0;
 					switch (robots[0].type) {
-					case LUMBERJACK:
-						if (rc.getLocation().distanceTo(robots[0].getLocation()) < RobotType.LUMBERJACK.bodyRadius
-								+ RobotType.LUMBERJACK.strideRadius + GameConstants.LUMBERJACK_STRIKE_RADIUS
-								+ rc.getType().strideRadius + 0.01f) {
-							tryMove(toEnemy.opposite());
-						} else {
+					case GARDENER:
+					case SCOUT:
+						if(!dodge()){
 							tryMove(toEnemy);
 						}
 						break;
-					case GARDENER:
-					case SCOUT:
-					case ARCHON:
-						tryMove(toEnemy);
-						break;
 					case SOLDIER:
 					case TANK:
-						dodge();
+					case LUMBERJACK:
+					case ARCHON:
+						if(!dodge()){
+							tryMove(toEnemy.opposite());
+						}
 						break;
 					default:
 						break;
