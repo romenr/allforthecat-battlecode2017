@@ -40,32 +40,30 @@ public strictfp class Gardener {
 			// robot to explode
 			try {
 				checkWinCondition();
-				
+
 				soonInGarden = false;
 				turnSinceSpawn++;
 				broadcastGardenerAliveMessage();
 				shakeBulletTree();
-				
+
 				// Starting strat
-				if(rc.getRoundNum() < 10 && rc.isBuildReady()){
+				if (rc.getRoundNum() < 10 && rc.isBuildReady()) {
 					TreeInfo[] treeInfos = rc.senseNearbyTrees();
-					if(treeInfos.length > 4){
+					if (treeInfos.length > 4) {
 						tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18);
-					}else{
+					} else {
 						tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18);
 					}
 				}
-				if(rc.getRoundNum() < 20 && rc.isBuildReady()){
+				if (rc.getRoundNum() < 20 && rc.isBuildReady()) {
 					tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18);
 				}
 
-				if (!inGarden && rc.onTheMap(rc.getLocation(), GARDEN_SIZE)
-						&& !rc.isCircleOccupiedExceptByThisRobot(rc.getLocation(), GARDEN_SIZE)) {
+				if (!inGarden && isValidGardenPosition(rc.getLocation()) && isDistanceToOtherGardenersEnough()) {
 					Direction[] directions = getDirections(12);
 					for (Direction dir : directions) {
 						MapLocation mapLocation = rc.getLocation().add(dir, RobotType.GARDENER.strideRadius);
-						if (rc.onTheMap(mapLocation, GARDEN_SIZE)
-								&& !rc.isCircleOccupiedExceptByThisRobot(mapLocation, GARDEN_SIZE)) {
+						if (isValidGardenPosition(mapLocation)) {
 							if (tryMove(rc.getLocation().directionTo(mapLocation))) {
 								break;
 							}
@@ -85,7 +83,7 @@ public strictfp class Gardener {
 							hasBuildSoldier = true;
 						}
 					}
-					if(treesSinceSoldier < 2){
+					if (treesSinceSoldier < 2) {
 						for (int i = 1; i < 6; i++) {
 							if (rc.canPlantTree(unitBuildDirection.rotateLeftDegrees(60 * i))) {
 								rc.plantTree(unitBuildDirection.rotateLeftDegrees(60 * i));
@@ -102,22 +100,22 @@ public strictfp class Gardener {
 					Direction[] directions = getDirections(12);
 					for (Direction dir : directions) {
 						float offset = 0.5f;
-						for(int i = 1; i < 7; i++){
-							MapLocation mapLocation = rc.getLocation().add(dir, i*offset);
-							if (rc.onTheMap(mapLocation, GARDEN_SIZE)
-									&& !rc.isCircleOccupiedExceptByThisRobot(mapLocation, GARDEN_SIZE)) {
+						for (int i = 1; i < 7; i++) {
+							MapLocation mapLocation = rc.getLocation().add(dir, i * offset);
+							if (isValidGardenPosition(mapLocation)) {
 								if (tryMove(rc.getLocation().directionTo(mapLocation))) {
 									soonInGarden = true;
 									break;
 								}
 							}
 						}
-						if(rc.hasMoved())
+						if (rc.hasMoved())
 							break;
 					}
-					if (!rc.hasMoved()) {
-						tryMove(getNearestInitialArchonLocation(rc.getTeam()).directionTo(rc.getLocation()));
-					}
+				}
+				
+				if (!inGarden && !rc.hasMoved()) {
+					tryMove(getNearestInitialArchonLocation(rc.getTeam()).directionTo(rc.getLocation()));
 				}
 
 				TreeInfo[] trees = rc.senseNearbyTrees(-1, rc.getTeam());
@@ -139,29 +137,30 @@ public strictfp class Gardener {
 							rc.broadcast(SCOUT_IS_BUILD_CHANNEL, 1);
 						}
 					}
-					if(hasBuildSoldier || treesSinceSoldier < 2){
+					if (hasBuildSoldier || treesSinceSoldier < 2) {
 						if (rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) < MIN_LUMBERJACKS
 								&& rc.canBuildRobot(RobotType.LUMBERJACK, unitBuildDirection)) {
 							rc.buildRobot(RobotType.LUMBERJACK, unitBuildDirection);
 							rc.broadcast(Broadcast.LUMBERJACK_COUNT, rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) + 1);
 						}
-					}					
+					}
 					if (rc.canBuildRobot(RobotType.SOLDIER, unitBuildDirection)) {
 						rc.buildRobot(RobotType.SOLDIER, unitBuildDirection);
 						treesSinceSoldier = 0;
 					}
-				}else{
-					if(!soonInGarden){
+				} else {
+					if (!soonInGarden) {
 						Direction dir = randomDirection();
 						if (rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) < MIN_LUMBERJACKS
 								&& rc.canBuildRobot(RobotType.LUMBERJACK, dir)) {
-							if(tryBuildRobot(dir, RobotType.LUMBERJACK)){
-								rc.broadcast(Broadcast.LUMBERJACK_COUNT, rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) + 1);
+							if (tryBuildRobot(dir, RobotType.LUMBERJACK)) {
+								rc.broadcast(Broadcast.LUMBERJACK_COUNT,
+										rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) + 1);
 							}
 						}
 					}
 				}
-				
+
 				debug_productionInfo();
 
 				// Clock.yield() makes the robot wait until the next turn, then
@@ -229,6 +228,33 @@ public strictfp class Gardener {
 
 		// A gardener was never hired, so return false.
 		return false;
+	}
+
+	// The Radius of a Hexagon Garden
+	public static final float RADIUS = RobotType.GARDENER.bodyRadius + GameConstants.GENERAL_SPAWN_OFFSET
+			+ 2 * GameConstants.BULLET_TREE_RADIUS;
+
+	/**
+	 * Check if location is a place where a Garden can be build
+	 * 
+	 * @param location
+	 *            the map Location
+	 * @return
+	 * @throws GameActionException
+	 */
+	public static boolean isValidGardenPosition(MapLocation location) throws GameActionException {
+		return rc.canSenseAllOfCircle(location, RADIUS) && rc.onTheMap(location, RADIUS)
+				&& !rc.isCircleOccupiedExceptByThisRobot(location, RADIUS);
+	}
+
+	/**
+	 * Check if there is enough space between this and other gardeners
+	 * 
+	 * @return true if there is enough space
+	 */
+	public static boolean isDistanceToOtherGardenersEnough() {
+		TreeInfo[] treeInfos = rc.senseNearbyTrees(RADIUS + 2.5f, rc.getTeam());
+		return treeInfos.length == 0;
 	}
 
 }

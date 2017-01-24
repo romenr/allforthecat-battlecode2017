@@ -18,6 +18,7 @@ public strictfp class Broadcast {
 	public static final int GARDENER_GARDEN_EVEN_TURN_CHANNEL = 5;
 	public static final int GARDENER_GARDEN_ODD_TURN_CHANNEL = 6;
 	public static final int ENEMY_LOCATION = 7;
+	public static final int STARTING_GARDENER_BUILD = 8;
 	
 	/**
 	 * Returns the Number of Gardeners who where alive last Turn.

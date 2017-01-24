@@ -52,13 +52,12 @@ public strictfp class Archon {
 					System.out.println(getGardenerAliveCount());
 				}
 				if(rc.getRoundNum() <= 10){
-					MapLocation[] archons = rc.getInitialArchonLocations(rc.getTeam());
-					if(archons.length == rc.getRobotCount()){
+					if(rc.readBroadcast(STARTING_GARDENER_BUILD) == 0){
 						if(tryBuildGardener(getGoodGardenerDirection(), 10, 18)){
-							broadcastGardenerAliveMessage();
+							rc.broadcast(STARTING_GARDENER_BUILD, 1);
 						}
 					}
-				}if(rc.getRoundNum() > 500){
+				}else if(rc.getRoundNum() > 500){
 					int gardenerAlive = getGardenerAliveCount();
 					if (gardenerAlive * 3 <= rc.getTreeCount() && gardenerAlive < numberGardeners) {
 						if(tryBuildGardener(getGoodGardenerDirection(), 10, 18)){
