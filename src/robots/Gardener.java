@@ -45,23 +45,13 @@ public strictfp class Gardener {
 				turnSinceSpawn++;
 				broadcastGardenerAliveMessage();
 				shakeBulletTree();
-				if(defenseScouts < 2){
-					RobotInfo[] robotInfos = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-					if(robotInfos.length >= 2 && rc.readBroadcast(ENEMY_LOCATION) == 0){
-						rc.broadcast(ENEMY_LOCATION, encode(robotInfos[0].getLocation()));
-					}
-					for(RobotInfo robot: robotInfos){
-						if(robot.getType() == RobotType.SCOUT){
-							if(unitBuildDirection != null){
-								if (tryBuildRobot(unitBuildDirection, RobotType.SCOUT, 10, 18)) {
-									defenseScouts++;
-								}
-							}else if (tryBuildRobot(randomDirection(), RobotType.SCOUT, 10, 18)) {
-								defenseScouts++;
-							}
-							break;
-						}
-					}
+				
+				// Starting strat
+				if(rc.getRoundNum() < 10 && rc.isBuildReady()){
+					tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18);
+				}
+				if(rc.getRoundNum() < 20 && rc.isBuildReady()){
+					tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18);
 				}
 
 				if (!inGarden && rc.onTheMap(rc.getLocation(), GARDEN_SIZE)
@@ -121,7 +111,7 @@ public strictfp class Gardener {
 							break;
 					}
 					if (!rc.hasMoved()) {
-						tryMove(randomDirection());
+						tryMove(getNearestInitialArchonLocation(rc.getTeam()).directionTo(rc.getLocation()));
 					}
 				}
 

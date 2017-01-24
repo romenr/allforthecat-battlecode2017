@@ -1,15 +1,13 @@
 package robots;
 
 import battlecode.common.Clock;
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
 import battlecode.common.Team;
 import battlecode.common.TreeInfo;
-import gamemechanics.Broadcast;
+import gamemechanics.Util;
 
 import static thecat.RobotPlayer.rc;
 import static gamemechanics.Util.*;
@@ -20,10 +18,6 @@ public strictfp class Lumberjack {
 
 	public static void run() throws GameActionException {
 		Team enemy = rc.getTeam().opponent();
-		int lumberjackCount = rc.readBroadcast(Broadcast.LUMBERJACK_COUNT);
-		if (lumberjackCount == 5 || lumberjackCount == 6) {
-			checkFreeWay = true;
-		}
 
 		// The code you want your robot to perform every round should be in this
 		// loop
@@ -32,30 +26,35 @@ public strictfp class Lumberjack {
 			// Try/catch blocks stop unhandled exceptions, which cause your
 			// robot to explode
 			try {
-				
+
 				checkWinCondition();
 
-				if (!checkFreeWay) {
-					if (best != null) {
-						try {
-							best = rc.senseTree(best.getID());
-						} catch (Exception e) {
-							best = null;
+				// Update the best tree
+				// if we cant sense it set it to null
+				if (best != null) {
+					TreeInfo[] trees = rc.senseNearbyTrees();
+					int id = best.getID();
+					best = null;
+					for (TreeInfo t : trees) {
+						if(t.getID() == id){
+							best = t;
+							break;
 						}
 					}
+				}
 
-					if (best == null || best.getHealth() <= 0) {
-						best = null;
-						TreeInfo[] trees = rc.senseNearbyTrees();
-						for (TreeInfo t : trees) {
-							if (t.getTeam() != rc.getTeam()) {
-								if (t.getContainedRobot() != null) {
-									best = t;
-									break;
-								}
-								if (best == null) {
-									best = t;
-								}
+				// Search a new best tree
+				if (best == null) {
+					best = null;
+					TreeInfo[] trees = rc.senseNearbyTrees();
+					for (TreeInfo t : trees) {
+						if (t.getTeam() != rc.getTeam()) {
+							if (t.getContainedRobot() != null) {
+								best = t;
+								break;
+							}
+							if (best == null) {
+								best = t;
 							}
 						}
 					}
@@ -63,14 +62,16 @@ public strictfp class Lumberjack {
 
 				// See if there are any enemy robots within striking range
 				// (distance 1 from lumberjack's radius)
-				RobotInfo[] robots = rc.senseNearbyRobots(
-						RobotType.LUMBERJACK.bodyRadius + GameConstants.LUMBERJACK_STRIKE_RADIUS - 0.01f, enemy);
-				RobotInfo[] allies = rc.senseNearbyRobots(
-						RobotType.LUMBERJACK.bodyRadius + GameConstants.LUMBERJACK_STRIKE_RADIUS - 0.01f, rc.getTeam());
-				if (robots.length > 0 && !rc.hasAttacked() && allies.length < robots.length) {
+				RobotInfo[] robots = rc.senseNearbyRobots(GameConstants.LUMBERJACK_STRIKE_RADIUS, enemy);
+				RobotInfo[] allies = rc.senseNearbyRobots(GameConstants.LUMBERJACK_STRIKE_RADIUS, rc.getTeam());
+				if (robots.length > 0 && !rc.hasAttacked()) {
 					// Use strike() to hit all nearby robots!
-					tryMove(rc.getLocation().directionTo(robots[0].getLocation()),
-							rc.getLocation().distanceTo(robots[0].getLocation()) - 0.1f);
+					if(allies.length > 0){
+						// Move away from allie
+						tryMove(allies[0].location.directionTo(rc.getLocation()));
+					}else{
+						dodge();
+					}
 					rc.strike();
 				} else {
 					// No close robots, so search for robots within sight radius
@@ -78,32 +79,43 @@ public strictfp class Lumberjack {
 
 					// If there is a robot, move towards it
 					if (robots.length > 0) {
-						MapLocation myLocation = rc.getLocation();
 						MapLocation enemyLocation = robots[0].getLocation();
-						Direction toEnemy = myLocation.directionTo(enemyLocation);
-						tryMove(toEnemy);
+
+						switch (robots[0].type) {
+						case LUMBERJACK:
+						case GARDENER:
+						case SCOUT:
+						case ARCHON:
+						case SOLDIER:
+							Util.moveToTarget(enemyLocation);
+							break;
+						case TANK:
+							// runaway aaaaa
+							tryMove(enemyLocation.directionTo(rc.getLocation()));
+							break;
+						default:
+							break;
+						}
+						
 					} else if (best == null) {
-						if (!tryMove(getGeneralEnemyDirection())) {
-							TreeInfo[] trees = rc.senseNearbyTrees();
-							for (TreeInfo t : trees) {
-								if (t.getTeam() != rc.getTeam()) {
-									if (rc.canChop(t.getID())) {
-										rc.chop(t.getID());
-										break;
-									}
-								}
-							}
+						if (!Util.moveToTarget(getGeneralEnemyLocation())) {
 						}
 
 					} else {
 						if (rc.canChop(best.getID())) {
 							rc.chop(best.getID());
-							if (best.getHealth() <= 5) {
-								best = null;
-							}
 						} else {
-							if (!tryMove(rc.getLocation().directionTo(best.getLocation()))) {
-								best = null;
+							Util.moveToTarget(best.getLocation());
+						}
+					}
+				}
+				if(!rc.hasAttacked()){
+					TreeInfo[] trees = rc.senseNearbyTrees();
+					for (TreeInfo t : trees) {
+						if (t.getTeam() != rc.getTeam()) {
+							if (rc.canChop(t.getID())) {
+								rc.chop(t.getID());
+								break;
 							}
 						}
 					}

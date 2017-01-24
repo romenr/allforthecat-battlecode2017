@@ -3,6 +3,7 @@ package gamemechanics;
 import static thecat.RobotPlayer.rc;
 import static gamemechanics.Debug.*;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import battlecode.common.BodyInfo;
@@ -23,6 +24,8 @@ public strictfp class Util {
 	static Direction dir = null;
 	public static Random rand = new Random(rc.getID());
 	static boolean wander = false;
+	static boolean positive = rand.nextBoolean();
+	static MapLocation center = null;
 
 	public static void checkWinCondition() throws GameActionException {
 		// If we own 10000 or more bullets buy 1000 Victory Points
@@ -33,6 +36,82 @@ public strictfp class Util {
 		if ((int) (rc.getTeamBullets() / 10) + rc.getTeamVictoryPoints() >= 1000) {
 			rc.donate(rc.getTeamBullets());
 		}
+	}
+
+	// this is the slugs "tail" imagine leaving a trail of sticky goo on the map
+	// that you don't want to step in that slowly dissapates over time
+	static ArrayList<MapLocation> oldLocations = new ArrayList<MapLocation>();
+
+	public static boolean slugMoveToTarget(MapLocation target, float strideRadius) throws GameActionException {
+
+		// when trying to move, let's look forward, then incrementing left and
+		// right.
+		float[] toTry = { 0, (float) Math.PI / 4, (float) -Math.PI / 4, (float) Math.PI / 2, (float) -Math.PI / 2,
+				3 * (float) Math.PI / 4, -3 * (float) Math.PI / 4, -(float) Math.PI };
+
+		MapLocation ourLoc = rc.getLocation();
+		Direction toMove = ourLoc.directionTo(target);
+
+		// let's try to find a place to move!
+		for (int i = 0; i < toTry.length; i++) {
+			Direction dirToTry = toMove.rotateRightDegrees(toTry[i]);
+			if (rc.canMove(dirToTry, strideRadius)) {
+				// if that location is free, let's see if we've already moved
+				// there before (aka, it's in our tail)
+				MapLocation newLocation = ourLoc.add(dirToTry, strideRadius);
+				boolean haveWeMovedThereBefore = false;
+				for (int j = 0; j < oldLocations.size(); j++) {
+					if (newLocation.distanceTo(oldLocations.get(j)) < strideRadius) {
+						haveWeMovedThereBefore = true;
+						break;
+					}
+				}
+				if (!haveWeMovedThereBefore) {
+					oldLocations.add(newLocation);
+					if (oldLocations.size() > 10) {
+						// remove the head and chop the list down to size 10 (or
+						// whatever you want to use)
+						oldLocations.remove(0);
+					}
+					if (!rc.hasMoved() && rc.canMove(dirToTry, strideRadius)) {
+						rc.move(dirToTry, strideRadius);
+					}
+					return (true);
+				}
+
+			}
+		}
+		// looks like we can't move anywhere
+		return (false);
+
+	}
+
+	public static boolean moveToTarget(MapLocation location) throws GameActionException {
+		if (rc.hasMoved())
+			return false;
+		Direction dir = getGeneralEnemyDirection();
+		if(generalEnemyDirection == null){
+			center = null;
+		}
+		if (center == null && generalEnemyDirection != null) {
+			center = rc.getLocation().add(rc.getLocation().directionTo(generalEnemyDirection),
+					rc.getLocation().distanceTo(generalEnemyDirection) / 2);
+		}
+		if (!tryMove(dir)) {
+			if (getGeneralEnemyLocation() != null && center != null
+					&& !tryMove(rc.getLocation().directionTo(moveCircleAround(center, rc.getLocation(), positive)))) {
+				if (!tryMove(getWanderMapDirection())) {
+					System.out.println("I did not Move");
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	public static void wander() throws GameActionException {
+		Direction dir = randomDirection();
+		tryMove(dir);
 	}
 
 	public static int encode(MapLocation location) {
@@ -151,8 +230,9 @@ public strictfp class Util {
 		else
 			return rc.getLocation().directionTo(generalEnemyDirection);
 	}
-	
-	public static MapLocation getGeneralEnemyLocation(){
+
+	public static MapLocation getGeneralEnemyLocation() throws GameActionException {
+		getGeneralEnemyDirection();
 		return generalEnemyDirection;
 	}
 
@@ -367,8 +447,6 @@ public strictfp class Util {
 	static boolean trySidestep(BulletInfo bullet) throws GameActionException {
 
 		Direction towards = bullet.getDir();
-		MapLocation leftGoal = rc.getLocation().add(towards.rotateLeftDegrees(90), rc.getType().bodyRadius);
-		MapLocation rightGoal = rc.getLocation().add(towards.rotateRightDegrees(90), rc.getType().bodyRadius);
 
 		return (tryMove(towards.rotateRightDegrees(90)) || tryMove(towards.rotateLeftDegrees(90)));
 	}
@@ -385,8 +463,7 @@ public strictfp class Util {
 
 	}
 
-	public static boolean willCollideWith(Direction propagationDirection, MapLocation bulletLocation,
-			BodyInfo bodyInfo) {
+	public static float willCollideWith(Direction propagationDirection, MapLocation bulletLocation, BodyInfo bodyInfo) {
 		MapLocation location = bodyInfo.getLocation();
 
 		// Calculate bullet relations to this robot
@@ -397,7 +474,7 @@ public strictfp class Util {
 		// If theta > 90 degrees, then the bullet is traveling away from us and
 		// we can break early
 		if (Math.abs(theta) > Math.PI / 2) {
-			return false;
+			return 0;
 		}
 
 		// distToRobot is our hypotenuse, theta is our angle, and we want to
@@ -409,114 +486,67 @@ public strictfp class Util {
 		// line that is the path of the bullet.
 		float perpendicularDist = (float) Math.abs(distToRobot * Math.sin(theta)); // soh
 
-		return (perpendicularDist <= rc.getType().bodyRadius);
+		if ((perpendicularDist <= rc.getType().bodyRadius)) {
+			return bulletLocation.distanceTo(bodyInfo.getLocation());
+		} else {
+			return 0;
+		}
 	}
 
-	public static boolean willCollideWith(Direction dir, MapLocation location, Team team) {
+	public static float willCollideWith(Direction dir, MapLocation location, Team team) {
 		if (Team.NEUTRAL == team) {
 			TreeInfo[] trees = rc.senseNearbyTrees(-1, team);
 			for (TreeInfo tree : trees) {
-				if (willCollideWith(dir, location, tree)) {
-					return true;
+				float when = willCollideWith(dir, location, tree);
+				if (when > 0) {
+					return when;
 				}
 			}
 		} else {
 			RobotInfo[] friends = rc.senseNearbyRobots(-1, team);
 			for (RobotInfo friend : friends) {
-				if (willCollideWith(dir, location, friend)) {
-					return true;
+				float when = willCollideWith(dir, location, friend);
+				if (when > 0) {
+					return when;
 				}
 			}
 		}
-		return false;
+		return 0;
 	}
 
-	public static boolean willCollideWithTree(Direction dir) {
+	public static float willCollideWithTree(Direction dir) {
 		return willCollideWith(dir,
 				rc.getLocation().add(dir, rc.getType().bodyRadius + GameConstants.BULLET_SPAWN_OFFSET), Team.NEUTRAL);
 	}
 
 	public static boolean canShootBulletTo(Direction dir) {
 		MapLocation location = rc.getLocation().add(dir, rc.getType().bodyRadius + GameConstants.BULLET_SPAWN_OFFSET);
-		if (willCollideWith(dir, location, rc.getTeam())) {
+		float ally = willCollideWith(dir, location, rc.getTeam());
+		float enemy = willCollideWith(dir, location, rc.getTeam().opponent());
+		float tree = willCollideWith(dir, location, Team.NEUTRAL);
+		if (enemy == 0)
 			return false;
-		}
-		if (!willCollideWith(dir, location, rc.getTeam().opponent())) {
-			return false;
-		}
-		return true;
+		if (ally == 0)
+			return true;
+		return enemy < ally && enemy <= tree;
 	}
 
 	public static boolean canShootTriadTo(Direction dir) {
-		MapLocation location = rc.getLocation().add(dir, rc.getType().bodyRadius + GameConstants.BULLET_SPAWN_OFFSET);
-		if (willCollideWith(dir, location, rc.getTeam())) {
-			return false;
-		}
-		if (willCollideWith(dir.rotateLeftDegrees(GameConstants.TRIAD_SPREAD_DEGREES), location, rc.getTeam())) {
-			return false;
-		}
-		if (willCollideWith(dir.rotateRightDegrees(GameConstants.TRIAD_SPREAD_DEGREES), location, rc.getTeam())) {
-			return false;
-		}
-		int fails = 0;
-		if (!willCollideWith(dir, location, rc.getTeam().opponent())) {
-			fails++;
-		}
-		if (!willCollideWith(dir.rotateLeftDegrees(GameConstants.TRIAD_SPREAD_DEGREES), location,
-				rc.getTeam().opponent())) {
-			fails++;
-		}
-		if (!willCollideWith(dir.rotateRightDegrees(GameConstants.TRIAD_SPREAD_DEGREES), location,
-				rc.getTeam().opponent())) {
-			fails++;
-		}
-		if (fails > 1)
-			return false;
-		return true;
+		boolean a = canShootBulletTo(dir);
+		boolean b = canShootBulletTo(dir.rotateLeftDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
+		boolean c = canShootBulletTo(dir.rotateRightDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
+		return (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0) > 1;
 	}
 
 	public static boolean canShootPentandTo(Direction dir) {
-		MapLocation location = rc.getLocation().add(dir, rc.getType().bodyRadius + GameConstants.BULLET_SPAWN_OFFSET);
-		if (willCollideWith(dir, location, rc.getTeam())) {
-			return false;
-		}
-		if (willCollideWith(dir.rotateLeftDegrees(GameConstants.PENTAD_SPREAD_DEGREES), location, rc.getTeam())) {
-			return false;
-		}
-		if (willCollideWith(dir.rotateRightDegrees(GameConstants.PENTAD_SPREAD_DEGREES), location, rc.getTeam())) {
-			return false;
-		}
-		if (willCollideWith(dir.rotateLeftDegrees(2 * GameConstants.PENTAD_SPREAD_DEGREES), location, rc.getTeam())) {
-			return false;
-		}
-		if (willCollideWith(dir.rotateRightDegrees(2 * GameConstants.PENTAD_SPREAD_DEGREES), location, rc.getTeam())) {
-			return false;
-		}
-		int fails = 0;
-		if (!willCollideWith(dir, location, rc.getTeam().opponent())) {
-			fails++;
-		}
-		if (!willCollideWith(dir.rotateLeftDegrees(GameConstants.PENTAD_SPREAD_DEGREES), location,
-				rc.getTeam().opponent())) {
-			fails++;
-		}
-		if (!willCollideWith(dir.rotateRightDegrees(GameConstants.PENTAD_SPREAD_DEGREES), location,
-				rc.getTeam().opponent())) {
-			fails++;
-		}
-		if (!willCollideWith(dir.rotateLeftDegrees(2 * GameConstants.PENTAD_SPREAD_DEGREES), location,
-				rc.getTeam().opponent())) {
-			fails++;
-		}
-		if (!willCollideWith(dir.rotateRightDegrees(2 * GameConstants.PENTAD_SPREAD_DEGREES), location,
-				rc.getTeam().opponent())) {
-			fails++;
-		}
-		if (fails > 2)
-			return false;
-		return true;
+		boolean a = canShootBulletTo(dir);
+		boolean b = canShootBulletTo(dir.rotateLeftDegrees(GameConstants.PENTAD_SPREAD_DEGREES));
+		boolean c = canShootBulletTo(dir.rotateLeftDegrees(2 * GameConstants.PENTAD_SPREAD_DEGREES));
+		boolean d = canShootBulletTo(dir.rotateRightDegrees(GameConstants.PENTAD_SPREAD_DEGREES));
+		boolean e = canShootBulletTo(dir.rotateRightDegrees(2 * GameConstants.PENTAD_SPREAD_DEGREES));
+		return (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0) + (d ? 1 : 0) + (e ? 1 : 0) > 3;
 	}
-	
+
 	/**
 	 * Calculate the Point you should walk to if you want to wander in a circle
 	 * around center

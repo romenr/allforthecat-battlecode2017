@@ -73,19 +73,17 @@ public strictfp class Scout {
 					}
 					while (shootAt < robots.length) {
 						Direction shootTo = rc.getLocation().directionTo(robots[shootAt].location);
-						if (!willCollideWithTree(shootTo)) {
-							if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
-								rc.firePentadShot(shootTo);
-								break;
-							}
-							if (rc.canFireTriadShot() && canShootTriadTo(shootTo)) {
-								rc.fireTriadShot(shootTo);
-								break;
-							}
-							if (rc.canFireSingleShot() && canShootBulletTo(shootTo)) {
-								rc.fireSingleShot(shootTo);
-								break;
-							}
+						if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
+							rc.firePentadShot(shootTo);
+							break;
+						}
+						if (rc.canFireTriadShot() && canShootTriadTo(shootTo)) {
+							rc.fireTriadShot(shootTo);
+							break;
+						}
+						if (rc.canFireSingleShot() && canShootBulletTo(shootTo)) {
+							rc.fireSingleShot(shootTo);
+							break;
 						}
 						shootAt++;
 					}

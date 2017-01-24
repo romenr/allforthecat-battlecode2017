@@ -1,5 +1,6 @@
 package robots;
 
+import battlecode.common.BulletInfo;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -7,6 +8,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
 import gamemechanics.NeutralTrees;
+import gamemechanics.Util;
 
 import static thecat.RobotPlayer.rc;
 import static gamemechanics.Broadcast.ENEMY_LOCATION;
@@ -19,9 +21,6 @@ public strictfp class Soldier {
 
 	public static void run() throws GameActionException {
 		Team enemy = rc.getTeam().opponent();
-		MapLocation a = getNearestInitialArchonLocation(rc.getTeam());
-		MapLocation b = getNearestInitialArchonLocation(rc.getTeam().opponent());
-		MapLocation center = a.add(a.directionTo(b), a.distanceTo(b) / 2);
 
 		// The code you want your robot to perform every round should be in this
 		// loop
@@ -35,10 +34,11 @@ public strictfp class Soldier {
 
 				// See if there are any nearby enemy robots
 				RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+				BulletInfo[] bulletInfos = rc.senseNearbyBullets();
 
 				// If there are some...
 				if (robots.length > 0) {
-					if (robots.length >= 4 && rc.readBroadcast(ENEMY_LOCATION) == 0) {
+					if (rc.readBroadcast(ENEMY_LOCATION) == 0) {
 						rc.broadcast(ENEMY_LOCATION, encode(robots[0].getLocation()));
 					}
 
@@ -53,50 +53,55 @@ public strictfp class Soldier {
 
 					switch (robots[0].type) {
 					case LUMBERJACK:
-						if(rc.getLocation().distanceTo(robots[0].getLocation()) < 5.6f){
+						if (rc.getLocation().distanceTo(robots[0].getLocation()) < 5.6f) {
 							tryMove(toEnemy.opposite());
-						}else{
+						} else {
 							tryMove(toEnemy);
 						}
 						break;
 					case GARDENER:
 					case SCOUT:
-					case ARCHON:
 						tryMove(toEnemy);
 						break;
 					case SOLDIER:
 					case TANK:
-						dodge();
+						if (rc.getLocation().distanceTo(robots[0].getLocation()) <= 6) {
+							tryMove(toEnemy);
+						} else {
+							dodge();
+						}
 						break;
+					case ARCHON:
+						if (robots.length > 1) {
+							tryMove(rc.getLocation().directionTo(robots[1].getLocation()));
+						}
 					default:
 						break;
 					}
 					while (shootAt < robots.length) {
 						Direction shootTo = rc.getLocation().directionTo(robots[shootAt].location);
-						if (!willCollideWithTree(shootTo)) {
-							if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
-								rc.firePentadShot(shootTo);
-								break;
-							}
-							if (rc.canFireTriadShot() && canShootTriadTo(shootTo)) {
-								rc.fireTriadShot(shootTo);
-								break;
-							}
-							if (rc.canFireSingleShot() && canShootBulletTo(shootTo)) {
-								rc.fireSingleShot(shootTo);
-								break;
-							}
+						if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
+							rc.firePentadShot(shootTo);
+							break;
+						}
+						if (rc.canFireTriadShot() && canShootTriadTo(shootTo)) {
+							rc.fireTriadShot(shootTo);
+							break;
+						}
+						if (rc.canFireSingleShot() && canShootBulletTo(shootTo)) {
+							rc.fireSingleShot(shootTo);
+							break;
 						}
 						shootAt++;
 					}
-				} else {
-					if (!tryMove(getGeneralEnemyDirection())) {
-						if (getGeneralEnemyLocation() != null && !tryMove(
-								rc.getLocation().directionTo(moveCircleAround(center, rc.getLocation(), positive)))) {
-							if (!tryMove(getWanderMapDirection())) {
-								System.out.println("I did not Move");
-							}
+				} else if(bulletInfos.length > 0){
+					dodge();
+				}else{
+					if (!Util.moveToTarget(Util.getGeneralEnemyLocation())) {
+						if(!tryMove(getWanderMapDirection())){
+							System.out.println("I did not Move");
 						}
+
 					}
 				}
 
