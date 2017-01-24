@@ -74,6 +74,8 @@ public strictfp class Soldier {
 					case ARCHON:
 						if (robots.length > 1) {
 							tryMove(rc.getLocation().directionTo(robots[1].getLocation()));
+						}else{
+							tryMove(toEnemy);
 						}
 					default:
 						break;
@@ -94,8 +96,8 @@ public strictfp class Soldier {
 						}
 						shootAt++;
 					}
-				} else if(bulletInfos.length > 0){
-					dodge();
+				} else if(bulletInfos.length > 0 && dodge()){
+					//Dodged bullet
 				}else{
 					if (!Util.moveToTarget(Util.getGeneralEnemyLocation())) {
 						if(!tryMove(getWanderMapDirection())){

@@ -90,7 +90,7 @@ public strictfp class Gardener {
 					}
 					rc.setIndicatorDot(rc.getLocation().add(unitBuildDirection), 255, 0, 0);
 					if (rc.senseNearbyTrees(RobotType.GARDENER.bodyRadius + 2 * GameConstants.GENERAL_SPAWN_OFFSET,
-							rc.getTeam()).length >= 3) {
+							rc.getTeam()).length == 5) {
 						broadcastGardenerGardenMessage();
 					}
 				} else {
@@ -129,7 +129,7 @@ public strictfp class Gardener {
 				}
 
 				if (unitBuildDirection != null) {
-					if (rc.readBroadcast(SCOUT_IS_BUILD_CHANNEL) == 0) {
+					if (rc.readBroadcast(SCOUT_IS_BUILD_CHANNEL) == 0 && rc.getRoundNum() >= 200) {
 						if (tryBuildRobot(unitBuildDirection, RobotType.SCOUT, 10, 18)) {
 							rc.broadcast(SCOUT_IS_BUILD_CHANNEL, 1);
 						}

@@ -14,8 +14,8 @@ import battlecode.common.RobotInfo;
 
 public strictfp class Archon {
 
-	public static int numberGardeners = 6;
-	public static final int START_BUYING_VICTORY_POINTS_TURN = 200;
+	public static int numberGardeners = 8;
+	public static final int START_BUYING_VICTORY_POINTS_TURN = 800;
 
 	public static void run() throws GameActionException {
 
@@ -31,8 +31,9 @@ public strictfp class Archon {
 				
 				// After a certain amount of turns start buying Victory Points with a overhead of Bullets
 				if(rc.getRoundNum() > START_BUYING_VICTORY_POINTS_TURN){
-					if (rc.getTeamBullets() >= 170) {
-						rc.donate(20);
+					// Prevent building new Gardeners if we don't have eco anyways
+					if (rc.getTeamBullets() >= 100) {
+						rc.donate(2*rc.getVictoryPointCost());
 					}
 				}
 				
@@ -50,17 +51,35 @@ public strictfp class Archon {
 					}
 					System.out.println(getGardenerAliveCount());
 				}
-				int gardenerAlive = getGardenerAliveCount();
-				if ((getGardenerGardenCount() >= gardenerAlive||rc.getRoundNum()>=200) && gardenerAlive < numberGardeners) {
-					if(tryBuildGardener(getGoodGardenerDirection(), 10, 18)){
-						broadcastGardenerAliveMessage();
+				if(rc.getRoundNum() <= 10){
+					MapLocation[] archons = rc.getInitialArchonLocations(rc.getTeam());
+					if(archons.length == rc.getRobotCount()){
+						if(tryBuildGardener(getGoodGardenerDirection(), 10, 18)){
+							broadcastGardenerAliveMessage();
+						}
+					}
+				}if(rc.getRoundNum() > 500){
+					int gardenerAlive = getGardenerAliveCount();
+					if (gardenerAlive * 3 <= rc.getTreeCount() && gardenerAlive < numberGardeners) {
+						if(tryBuildGardener(getGoodGardenerDirection(), 10, 18)){
+							broadcastGardenerAliveMessage();
+						}
+					}
+				}else{
+					int gardenerAlive = getGardenerAliveCount();
+					if ((getGardenerGardenCount() >= gardenerAlive) && gardenerAlive < numberGardeners) {
+						if(tryBuildGardener(getGoodGardenerDirection(), 10, 18)){
+							broadcastGardenerAliveMessage();
+						}
 					}
 				}
-
+				
 				RobotInfo[] robotInfos = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-				if(robotInfos.length >= 2 && rc.readBroadcast(ENEMY_LOCATION) == 0){
+				if(robotInfos.length >= 1 && rc.readBroadcast(ENEMY_LOCATION) == 0){
 					rc.broadcast(ENEMY_LOCATION, encode(robotInfos[0].getLocation()));
 				}
+				
+				tryMove(getWanderMapDirection());
 				
 				shakeBulletTree();
 				

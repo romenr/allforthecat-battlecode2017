@@ -89,7 +89,9 @@ public strictfp class Scout {
 					}
 				} else if (tryShakeBulletTree()) {
 					debug_println("Moved to Tree");
-				} else {
+				} else if(Math.random() < 0.5 && tryMove(protect.directionTo(rc.getLocation()))){
+					debug_println("Increased radius");
+				}else{
 					// try to Move a Circle around protect the point
 					if (increaseRadius > 0) {
 						if (tryMove(rc.getLocation().directionTo(protect).opposite())) {
@@ -113,7 +115,7 @@ public strictfp class Scout {
 					} else {
 						MapLocation target = moveCircleAround(protect, rc.getLocation(), positive);
 						Direction toTarget = rc.getLocation().directionTo(target);
-						if (rc.onTheMap(target)) {
+						if (rc.canSenseLocation(target) && rc.onTheMap(target)) {
 							if (tryMove(toTarget)) {
 								debug_println("Circular Move");
 							} else {

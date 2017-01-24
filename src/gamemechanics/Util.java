@@ -3,7 +3,6 @@ package gamemechanics;
 import static thecat.RobotPlayer.rc;
 import static gamemechanics.Debug.*;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 import battlecode.common.BodyInfo;
@@ -26,71 +25,21 @@ public strictfp class Util {
 	static boolean wander = false;
 	static boolean positive = rand.nextBoolean();
 	static MapLocation center = null;
+	static Direction explore = null;
 
 	public static void checkWinCondition() throws GameActionException {
-		// If we own 10000 or more bullets buy 1000 Victory Points
-		if (rc.getTeamBullets() >= 10000) {
-			rc.donate(10000);
-		}
-
-		if ((int) (rc.getTeamBullets() / 10) + rc.getTeamVictoryPoints() >= 1000) {
+		// Check if we can win now
+		if ((rc.getTeamBullets() / rc.getVictoryPointCost()) + rc.getTeamVictoryPoints() >= 1000) {
+			// Buy the Win
 			rc.donate(rc.getTeamBullets());
 		}
-	}
-
-	// this is the slugs "tail" imagine leaving a trail of sticky goo on the map
-	// that you don't want to step in that slowly dissapates over time
-	static ArrayList<MapLocation> oldLocations = new ArrayList<MapLocation>();
-
-	public static boolean slugMoveToTarget(MapLocation target, float strideRadius) throws GameActionException {
-
-		// when trying to move, let's look forward, then incrementing left and
-		// right.
-		float[] toTry = { 0, (float) Math.PI / 4, (float) -Math.PI / 4, (float) Math.PI / 2, (float) -Math.PI / 2,
-				3 * (float) Math.PI / 4, -3 * (float) Math.PI / 4, -(float) Math.PI };
-
-		MapLocation ourLoc = rc.getLocation();
-		Direction toMove = ourLoc.directionTo(target);
-
-		// let's try to find a place to move!
-		for (int i = 0; i < toTry.length; i++) {
-			Direction dirToTry = toMove.rotateRightDegrees(toTry[i]);
-			if (rc.canMove(dirToTry, strideRadius)) {
-				// if that location is free, let's see if we've already moved
-				// there before (aka, it's in our tail)
-				MapLocation newLocation = ourLoc.add(dirToTry, strideRadius);
-				boolean haveWeMovedThereBefore = false;
-				for (int j = 0; j < oldLocations.size(); j++) {
-					if (newLocation.distanceTo(oldLocations.get(j)) < strideRadius) {
-						haveWeMovedThereBefore = true;
-						break;
-					}
-				}
-				if (!haveWeMovedThereBefore) {
-					oldLocations.add(newLocation);
-					if (oldLocations.size() > 10) {
-						// remove the head and chop the list down to size 10 (or
-						// whatever you want to use)
-						oldLocations.remove(0);
-					}
-					if (!rc.hasMoved() && rc.canMove(dirToTry, strideRadius)) {
-						rc.move(dirToTry, strideRadius);
-					}
-					return (true);
-				}
-
-			}
-		}
-		// looks like we can't move anywhere
-		return (false);
-
 	}
 
 	public static boolean moveToTarget(MapLocation location) throws GameActionException {
 		if (rc.hasMoved())
 			return false;
-		Direction dir = getGeneralEnemyDirection();
-		if(generalEnemyDirection == null){
+		Direction dir = rc.getLocation().directionTo(location);
+		if (generalEnemyDirection == null) {
 			center = null;
 		}
 		if (center == null && generalEnemyDirection != null) {
@@ -209,8 +158,13 @@ public strictfp class Util {
 	 * @throws GameActionException
 	 */
 	public static Direction getGeneralEnemyDirection() throws GameActionException {
+		int code = rc.readBroadcast(Broadcast.ENEMY_LOCATION);
+		if (code != 0) {
+			generalEnemyDirection = decode(code);
+			explore = null;
+		}
 		if (generalEnemyDirection == null) {
-			int code = rc.readBroadcast(Broadcast.ENEMY_LOCATION);
+			explore = null;
 			generalEnemyDirection = decode(code);
 			if (generalEnemyDirection == null) {
 				MapLocation[] enemyArchons = rc.getInitialArchonLocations(rc.getTeam().opponent());
@@ -225,10 +179,13 @@ public strictfp class Util {
 			generalEnemyDirection = null;
 			rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
 		}
-		if (wander)
-			return getWanderMapDirection();
-		else
-			return rc.getLocation().directionTo(generalEnemyDirection);
+		if (wander) {
+			if(explore == null){
+				explore = randomDirection();
+			}
+			generalEnemyDirection = rc.getLocation().add(explore, 20);
+		}
+		return rc.getLocation().directionTo(generalEnemyDirection);
 	}
 
 	public static MapLocation getGeneralEnemyLocation() throws GameActionException {
@@ -373,6 +330,10 @@ public strictfp class Util {
 			distance = rc.getType().strideRadius;
 		}
 
+		if (dir == null) {
+			dir = Direction.NORTH;
+		}
+
 		// First, try intended direction
 		if (rc.canMove(dir, distance)) {
 			rc.move(dir, distance);
@@ -451,15 +412,16 @@ public strictfp class Util {
 		return (tryMove(towards.rotateRightDegrees(90)) || tryMove(towards.rotateLeftDegrees(90)));
 	}
 
-	public static void dodge() throws GameActionException {
+	public static boolean dodge() throws GameActionException {
 		BulletInfo[] bullets = rc.senseNearbyBullets();
 		for (BulletInfo bi : bullets) {
 			if (willCollideWithMe(bi)) {
 				if (trySidestep(bi)) {
-					return;
+					return true;
 				}
 			}
 		}
+		return false;
 
 	}
 
@@ -566,7 +528,6 @@ public strictfp class Util {
 		float alpha = acrd(y, center.distanceTo(pointOnCircle));
 		// the sin of alpha ^^
 		float x = (float) Math.sin(alpha);
-		debug_println("X = " + x);
 		if (x == 0) {
 			// Should never happen :D
 			debug_println("moveCircleAround Division by Zero");

@@ -97,8 +97,8 @@ public strictfp class Tank {
 						}
 						shootAt++;
 					}
-				} else if(bulletInfos.length > 0){
-					dodge();
+				} else if(bulletInfos.length > 0 && dodge()){
+					//Dodged bullet
 				}else{
 					if (!Util.moveToTarget(Util.getGeneralEnemyLocation())) {
 						if(!tryMove(getWanderMapDirection())){
