@@ -92,8 +92,7 @@ public strictfp class Soldier {
 							rc.firePentadShot(shootTo);
 							break;
 						}
-						if (rc.canFireTriadShot() && (canShootTriadTo(shootTo)
-								|| (shootMoreThanNeeded && canShootTriadToSoldier(shootTo)))) {
+						if (rc.canFireTriadShot() && (canShootTriadTo(shootTo, shootMoreThanNeeded?0:1))) {
 							rc.fireTriadShot(shootTo);
 							break;
 						}

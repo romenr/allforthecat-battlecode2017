@@ -655,19 +655,16 @@ public strictfp class Util {
 	}
 
 	public static boolean canShootTriadTo(Direction dir) {
-		boolean a = canShootBulletTo(dir);
-		boolean b = canShootBulletTo(dir.rotateLeftDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
-		boolean c = canShootBulletTo(dir.rotateRightDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
-		return (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0) > 1;
+		return canShootTriadTo(dir, 1);
 	}
 	
-	public static boolean canShootTriadToSoldier(Direction dir) {
+	public static boolean canShootTriadTo(Direction dir, int hits) {
 		boolean a = canShootBulletTo(dir);
 		boolean b = canShootBulletTo(dir.rotateLeftDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
 		boolean c = canShootBulletTo(dir.rotateRightDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
-		return (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0) > 0;
+		return (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0) > hits;
 	}
-
+	
 	public static boolean canShootPentandTo(Direction dir) {
 		boolean a = canShootBulletTo(dir);
 		boolean b = canShootBulletTo(dir.rotateLeftDegrees(GameConstants.PENTAD_SPREAD_DEGREES));
