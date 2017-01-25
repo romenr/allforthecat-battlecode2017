@@ -13,6 +13,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 import battlecode.common.Team;
 import battlecode.common.TreeInfo;
 
@@ -81,6 +82,14 @@ public strictfp class Util {
 		if ((rc.getTeamBullets() / rc.getVictoryPointCost()) + rc.getTeamVictoryPoints() >= 1000) {
 			// Buy the Win
 			rc.donate(rc.getTeamBullets());
+		}
+		
+		if(rc.getRoundNum() == rc.getRoundLimit()-1){
+			rc.donate(rc.getTeamBullets());
+		}
+		
+		if(rc.getRobotCount() == 1 && rc.getType() != RobotType.ARCHON){
+			rc.donate((rc.getTeamBullets()/rc.getVictoryPointCost())*rc.getVictoryPointCost());
 		}
 	}
 
