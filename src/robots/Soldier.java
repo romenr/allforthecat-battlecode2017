@@ -67,11 +67,13 @@ public strictfp class Soldier {
 					case SOLDIER:
 						shootMoreThanNeeded = true;
 					case TANK:
-						if (rc.getLocation().distanceTo(robots[0].getLocation()) > 6) {
+						if (rc.getLocation().distanceTo(robots[0].getLocation()) > 5.9) {
 							tryMove(toEnemy);
 						} else {
 							if (!dodge()) {
-								tryMove(toEnemy);
+								if(!tryMove(toEnemy.rotateLeftDegrees(135))){
+									tryMove(toEnemy.rotateRightDegrees(135));
+								}
 							}
 						}
 						break;

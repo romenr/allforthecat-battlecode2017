@@ -32,7 +32,7 @@ public strictfp class Archon {
 				// After a certain amount of turns start buying Victory Points with a overhead of Bullets
 				if(rc.getRoundNum() > START_BUYING_VICTORY_POINTS_TURN){
 					// Prevent building new Gardeners if we don't have eco anyways
-					if (rc.getTeamBullets() >= 100) {
+					if (rc.getTeamBullets() >= 140) {
 						rc.donate(2*rc.getVictoryPointCost());
 					}
 				}
