@@ -115,7 +115,7 @@ public strictfp class Gardener {
 				}
 				
 				if (!inGarden && !rc.hasMoved()) {
-					tryMove(getNearestInitialArchonLocation(rc.getTeam()).directionTo(rc.getLocation()));
+					tryMove(randomDirection());
 				}
 
 				TreeInfo[] trees = rc.senseNearbyTrees(-1, rc.getTeam());

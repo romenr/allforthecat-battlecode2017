@@ -70,7 +70,7 @@ public strictfp class Soldier {
 						if (rc.getLocation().distanceTo(robots[0].getLocation()) > 6) {
 							tryMove(toEnemy);
 						} else {
-							if(!dodge()){
+							if (!dodge()) {
 								tryMove(toEnemy);
 							}
 						}
@@ -78,7 +78,7 @@ public strictfp class Soldier {
 					case ARCHON:
 						if (robots.length > 1) {
 							tryMove(rc.getLocation().directionTo(robots[1].getLocation()));
-						}else{
+						} else {
 							tryMove(toEnemy);
 						}
 					default:
@@ -90,7 +90,8 @@ public strictfp class Soldier {
 							rc.firePentadShot(shootTo);
 							break;
 						}
-						if (rc.canFireTriadShot() && (canShootTriadTo(shootTo)||shootMoreThanNeeded)) {
+						if (rc.canFireTriadShot() && (canShootTriadTo(shootTo)
+								|| (shootMoreThanNeeded && canShootTriadToSoldier(shootTo)))) {
 							rc.fireTriadShot(shootTo);
 							break;
 						}
@@ -100,11 +101,11 @@ public strictfp class Soldier {
 						}
 						shootAt++;
 					}
-				} else if(bulletInfos.length > 0 && dodge()){
-					//Dodged bullet
-				}else{
+				} else if (bulletInfos.length > 0 && dodge()) {
+					// Dodged bullet
+				} else {
 					if (!Util.moveToTarget(Util.getGeneralEnemyLocation())) {
-						if(!tryMove(getWanderMapDirection())){
+						if (!tryMove(getWanderMapDirection())) {
 							System.out.println("I did not Move");
 						}
 
@@ -112,7 +113,7 @@ public strictfp class Soldier {
 				}
 
 				debug_drawPath();
-				
+
 				NeutralTrees.shakeBulletTree();
 
 				// Clock.yield() makes the robot wait until the next turn, then

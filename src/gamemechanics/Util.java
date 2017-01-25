@@ -298,16 +298,17 @@ public strictfp class Util {
 				attackBase = true;
 				generalEnemyDirection = enmarchon;
 			}
-		}
-		if (rc.getLocation().distanceTo(generalEnemyDirection) <= 1) {
-			generalEnemyDirection = null;
-			if (broadcastEnemy) {
-				rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
-				broadcastEnemy = false;
-			}
-			if (attackBase) {
-				killedArchon();
-				attackBase = false;
+		}else{
+			if (rc.getLocation().distanceTo(generalEnemyDirection) <= 1) {
+				generalEnemyDirection = null;
+				if (broadcastEnemy) {
+					rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
+					broadcastEnemy = false;
+				}
+				if (attackBase) {
+					killedArchon();
+					attackBase = false;
+				}
 			}
 		}
 		if (wander && generalEnemyDirection == null) {
@@ -658,6 +659,13 @@ public strictfp class Util {
 		boolean b = canShootBulletTo(dir.rotateLeftDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
 		boolean c = canShootBulletTo(dir.rotateRightDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
 		return (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0) > 1;
+	}
+	
+	public static boolean canShootTriadToSoldier(Direction dir) {
+		boolean a = canShootBulletTo(dir);
+		boolean b = canShootBulletTo(dir.rotateLeftDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
+		boolean c = canShootBulletTo(dir.rotateRightDegrees(GameConstants.TRIAD_SPREAD_DEGREES));
+		return (a ? 1 : 0) + (b ? 1 : 0) + (c ? 1 : 0) > 0;
 	}
 
 	public static boolean canShootPentandTo(Direction dir) {
