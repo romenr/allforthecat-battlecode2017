@@ -132,11 +132,11 @@ public strictfp class Gardener {
 				}
 
 				if (unitBuildDirection != null) {
-					if (rc.readBroadcast(SCOUT_IS_BUILD_CHANNEL) == 0 && rc.getRoundNum() >= 200) {
-						if (tryBuildRobot(unitBuildDirection, RobotType.SCOUT, 10, 18)) {
-							rc.broadcast(SCOUT_IS_BUILD_CHANNEL, 1);
-						}
-					}
+//					if (rc.readBroadcast(SCOUT_IS_BUILD_CHANNEL) == 0 && rc.getRoundNum() >= 200) {
+//						if (tryBuildRobot(unitBuildDirection, RobotType.SCOUT, 10, 18)) {
+//							rc.broadcast(SCOUT_IS_BUILD_CHANNEL, 1);
+//						}
+//					}
 					if (hasBuildSoldier || treesSinceSoldier < 2) {
 						if (rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) < MIN_LUMBERJACKS
 								&& rc.canBuildRobot(RobotType.LUMBERJACK, unitBuildDirection)) {

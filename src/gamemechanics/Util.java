@@ -28,51 +28,54 @@ public strictfp class Util {
 	static MapLocation center = null;
 	static Direction explore = null;
 
-	// this is the slugs "tail" imagine leaving a trail of sticky goo on the map that you don't want to step in that slowly dissapates over time
-    static ArrayList<MapLocation> oldLocations = new ArrayList<MapLocation>();
+	// this is the slugs "tail" imagine leaving a trail of sticky goo on the map
+	// that you don't want to step in that slowly dissapates over time
+	static ArrayList<MapLocation> oldLocations = new ArrayList<MapLocation>();
 
+	public static boolean slugMoveToTarget(MapLocation target, float strideRadius) throws GameActionException {
 
+		// when trying to move, let's look forward, then incrementing left and
+		// right.
+		float[] toTry = { 0, (float) Math.PI / 4, (float) -Math.PI / 4, (float) Math.PI / 2, (float) -Math.PI / 2,
+				3 * (float) Math.PI / 4, -3 * (float) Math.PI / 4, -(float) Math.PI };
 
-    public static boolean slugMoveToTarget(MapLocation target, float strideRadius) throws GameActionException{
+		MapLocation ourLoc = rc.getLocation();
+		Direction toMove = ourLoc.directionTo(target);
 
-        // when trying to move, let's look forward, then incrementing left and right.
-        float[] toTry = {0, (float)Math.PI/4, (float)-Math.PI/4, (float)Math.PI/2, (float)-Math.PI/2, 3*(float)Math.PI/4, -3*(float)Math.PI/4, -(float)Math.PI};
+		// let's try to find a place to move!
+		for (int i = 0; i < toTry.length; i++) {
+			Direction dirToTry = toMove.rotateRightDegrees(toTry[i]);
+			if (rc.canMove(dirToTry, strideRadius)) {
+				// if that location is free, let's see if we've already moved
+				// there before (aka, it's in our tail)
+				MapLocation newLocation = ourLoc.add(dirToTry, strideRadius);
+				boolean haveWeMovedThereBefore = false;
+				for (int j = 0; j < oldLocations.size(); j++) {
+					if (newLocation.distanceTo(oldLocations.get(j)) < strideRadius * strideRadius) {
+						haveWeMovedThereBefore = true;
+						break;
+					}
+				}
+				if (!haveWeMovedThereBefore) {
+					oldLocations.add(newLocation);
+					if (oldLocations.size() > 10) {
+						// remove the head and chop the list down to size 10 (or
+						// whatever you want to use)
+						oldLocations.remove(0);
+					}
+					if (!rc.hasMoved() && rc.canMove(dirToTry, strideRadius)) {
+						rc.move(dirToTry, strideRadius);
+					}
+					return (true);
+				}
 
-        MapLocation ourLoc = rc.getLocation();
-        Direction toMove = ourLoc.directionTo(target);
+			}
+		}
+		// looks like we can't move anywhere
+		return (false);
 
-        // let's try to find a place to move!
-        for (int i = 0; i < toTry.length; i++) {
-            Direction dirToTry = toMove.rotateRightDegrees(toTry[i]);
-            if (rc.canMove(dirToTry, strideRadius)) {
-                // if that location is free, let's see if we've already moved there before (aka, it's in our tail)
-                MapLocation newLocation = ourLoc.add(dirToTry, strideRadius);
-                boolean haveWeMovedThereBefore = false;
-                for (int j = 0; j < oldLocations.size(); j++) {
-                    if (newLocation.distanceTo(oldLocations.get(j)) < strideRadius * strideRadius) {
-                        haveWeMovedThereBefore = true;
-                        break;
-                    }
-                }
-                if (!haveWeMovedThereBefore) {
-                    oldLocations.add(newLocation);
-                    if (oldLocations.size() > 10) {
-                        // remove the head and chop the list down to size 10 (or whatever you want to use)
-                    	oldLocations.remove(0);
-                    }
-                    if (! rc.hasMoved() && rc.canMove(dirToTry, strideRadius)) {
-                        rc.move(dirToTry, strideRadius);
-                    }
-                    return(true);
-                }
+	}
 
-            }
-        }
-        //looks like we can't move anywhere
-        return(false);
-
-    }
-	
 	public static void checkWinCondition() throws GameActionException {
 		// Check if we can win now
 		if ((rc.getTeamBullets() / rc.getVictoryPointCost()) + rc.getTeamVictoryPoints() >= 1000) {
@@ -81,27 +84,91 @@ public strictfp class Util {
 		}
 	}
 
-	public static boolean moveToTarget(MapLocation location) throws GameActionException {
-		if (rc.hasMoved())
+	private static final int NUM_CHECKS = 8;
+	private static final float directionAngle = (float) (Math.PI / NUM_CHECKS);
+	private static final int PATH_LENGTH = 16;
+	private static MapLocation[] path = null;
+	private static int lastPointer = 0;
+	private static int lastBeforeBacktrack = 0;
+	private static boolean backtrack = false;
+
+	public static boolean moveToTarget(MapLocation goalLocation) throws GameActionException {
+		if (rc.hasMoved() || rc.getLocation().equals(goalLocation))
 			return false;
-		Direction dir = rc.getLocation().directionTo(location);
-		if (generalEnemyDirection == null) {
-			center = null;
-		}
-		if (center == null && generalEnemyDirection != null) {
-			center = rc.getLocation().add(rc.getLocation().directionTo(generalEnemyDirection),
-					rc.getLocation().distanceTo(generalEnemyDirection) / 2);
-		}
-		if (!tryMove(dir)) {
-			if (getGeneralEnemyLocation() != null && center != null
-					&& !tryMove(rc.getLocation().directionTo(moveCircleAround(center, rc.getLocation(), positive)))) {
-				if (!tryMove(getWanderMapDirection())) {
-					System.out.println("I did not Move");
-					return false;
-				}
+
+		if (path == null) {
+			path = new MapLocation[PATH_LENGTH];
+			for (int i = 0; i < PATH_LENGTH; i++) {
+				path[i] = new MapLocation(1000, 1000);
 			}
 		}
-		return true;
+
+		Direction dir = rc.getLocation().directionTo(goalLocation);
+		float speed = rc.getType().strideRadius;
+		float minDistance = speed * speed;
+		
+
+		for (int i = 0; i <= NUM_CHECKS; i++) {
+			// 0, Pi and left rotations			
+			MapLocation locationAfterMove = rc.getLocation().add(dir.rotateLeftRads(i * directionAngle), speed);
+			
+			if(checkMove(locationAfterMove, minDistance)){
+				return true;
+			}
+			
+			if (i == 0 || i == NUM_CHECKS)
+				continue;
+
+			//right rotations
+			locationAfterMove = rc.getLocation().add(dir.rotateRightRads(i * directionAngle), speed);
+
+			if(checkMove(locationAfterMove, minDistance)){
+				return true;
+			}
+
+		}
+		
+		// escape move
+		if(rc.canMove(path[lastPointer])){
+			if(!backtrack){
+				lastBeforeBacktrack = lastPointer;
+				backtrack = true;
+			}
+			rc.move(path[lastPointer]);
+			lastPointer = (lastPointer - 1 + PATH_LENGTH) % PATH_LENGTH;
+			return true;
+		}
+
+		return false;
+	}
+	
+	public static boolean checkMove(MapLocation locationAfterMove, float minDistance) throws GameActionException{
+		boolean letsMoveThere = true;
+		if(rc.canMove(locationAfterMove)){
+			for (MapLocation onPath : path) {
+				if (locationAfterMove.isWithinDistance(onPath, minDistance)) {
+					letsMoveThere = false;
+					break;
+				}
+			}
+			if(letsMoveThere){
+				if(backtrack){
+					backtrack = false;
+					lastPointer = lastBeforeBacktrack;
+				}
+				lastPointer = (lastPointer + 1) % PATH_LENGTH;
+				path[lastPointer] = locationAfterMove;
+				rc.move(locationAfterMove);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static void debug_drawPath(){
+		for(MapLocation onPath: path){
+			rc.setIndicatorDot(onPath, 255, 0, 0);
+		}
 	}
 
 	public static void wander() throws GameActionException {
@@ -226,7 +293,7 @@ public strictfp class Util {
 			rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
 		}
 		if (wander) {
-			if(explore == null){
+			if (explore == null) {
 				explore = randomDirection();
 			}
 			generalEnemyDirection = rc.getLocation().add(explore, 20);
@@ -536,7 +603,7 @@ public strictfp class Util {
 			return false;
 		if (ally == 0 && tree == 0)
 			return true;
-		if(ally == 0 && enemy <= tree)
+		if (ally == 0 && enemy <= tree)
 			return true;
 		return enemy < ally;
 	}

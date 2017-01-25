@@ -14,8 +14,8 @@ import battlecode.common.RobotInfo;
 
 public strictfp class Archon {
 
-	public static int numberGardeners = 8;
-	public static final int START_BUYING_VICTORY_POINTS_TURN = 800;
+	public static int numberGardeners = 12;
+	public static final int START_BUYING_VICTORY_POINTS_TURN = 1400;
 
 	public static void run() throws GameActionException {
 
@@ -57,7 +57,7 @@ public strictfp class Archon {
 							rc.broadcast(STARTING_GARDENER_BUILD, 1);
 						}
 					}
-				}else if(rc.getRoundNum() > 500){
+				}else if(rc.getRoundNum() > 800){
 					int gardenerAlive = getGardenerAliveCount();
 					if (gardenerAlive * 3 <= rc.getTreeCount() && gardenerAlive < numberGardeners) {
 						if(tryBuildGardener(getGoodGardenerDirection(), 10, 18)){

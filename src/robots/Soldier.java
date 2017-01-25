@@ -50,6 +50,7 @@ public strictfp class Soldier {
 					MapLocation enemyLocation = robots[0].getLocation();
 					Direction toEnemy = myLocation.directionTo(enemyLocation);
 					int shootAt = 0;
+					boolean shootMoreThanNeeded = false;
 
 					switch (robots[0].type) {
 					case LUMBERJACK:
@@ -64,6 +65,7 @@ public strictfp class Soldier {
 						tryMove(toEnemy);
 						break;
 					case SOLDIER:
+						shootMoreThanNeeded = true;
 					case TANK:
 						if (rc.getLocation().distanceTo(robots[0].getLocation()) > 6) {
 							tryMove(toEnemy);
@@ -88,7 +90,7 @@ public strictfp class Soldier {
 							rc.firePentadShot(shootTo);
 							break;
 						}
-						if (rc.canFireTriadShot() && canShootTriadTo(shootTo)) {
+						if (rc.canFireTriadShot() && (canShootTriadTo(shootTo)||shootMoreThanNeeded)) {
 							rc.fireTriadShot(shootTo);
 							break;
 						}
@@ -109,6 +111,8 @@ public strictfp class Soldier {
 					}
 				}
 
+				debug_drawPath();
+				
 				NeutralTrees.shakeBulletTree();
 
 				// Clock.yield() makes the robot wait until the next turn, then
