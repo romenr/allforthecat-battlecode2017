@@ -614,9 +614,17 @@ public strictfp class Util {
 		}
 	}
 
+	public static TreeInfo[] trees;
+	public static int treesUpdatedTurn = -1;
+	public static RobotInfo[][] robots = new RobotInfo[2][];
+	public static int[] robotsUpdatedRound = {-1, -1};
+	
 	public static float willCollideWith(Direction dir, MapLocation location, Team team) {
 		if (Team.NEUTRAL == team) {
-			TreeInfo[] trees = rc.senseNearbyTrees(-1, team);
+			if(treesUpdatedTurn != rc.getRoundNum()){
+				trees = rc.senseNearbyTrees(-1, team);
+				treesUpdatedTurn = rc.getRoundNum();
+			}
 			for (TreeInfo tree : trees) {
 				float when = willCollideWith(dir, location, tree);
 				if (when > 0) {
@@ -624,8 +632,11 @@ public strictfp class Util {
 				}
 			}
 		} else {
-			RobotInfo[] robots = rc.senseNearbyRobots(-1, team);
-			for (RobotInfo robot : robots) {
+			if(robotsUpdatedRound[team.ordinal()] != rc.getRoundNum()){
+				robots[team.ordinal()] = rc.senseNearbyRobots(-1, team);
+				robotsUpdatedRound[team.ordinal()] = rc.getRoundNum();
+			}
+			for (RobotInfo robot : robots[team.ordinal()]) {
 				float when = willCollideWith(dir, location, robot);
 				if (when > 0) {
 					return when;

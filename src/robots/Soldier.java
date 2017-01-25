@@ -88,10 +88,6 @@ public strictfp class Soldier {
 					}
 					while (shootAt < robots.length) {
 						Direction shootTo = rc.getLocation().directionTo(robots[shootAt].location);
-						if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
-							rc.firePentadShot(shootTo);
-							break;
-						}
 						if (rc.canFireTriadShot() && (canShootTriadTo(shootTo, shootMoreThanNeeded?0:1))) {
 							rc.fireTriadShot(shootTo);
 							break;
