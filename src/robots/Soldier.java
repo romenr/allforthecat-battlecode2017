@@ -65,7 +65,7 @@ public strictfp class Soldier {
 						break;
 					case SOLDIER:
 					case TANK:
-						if (rc.getLocation().distanceTo(robots[0].getLocation()) <= 6) {
+						if (rc.getLocation().distanceTo(robots[0].getLocation()) > 6) {
 							tryMove(toEnemy);
 						} else {
 							if(!dodge()){

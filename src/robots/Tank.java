@@ -68,15 +68,19 @@ public strictfp class Tank {
 						break;
 					case SOLDIER:
 					case TANK:
-						if (rc.getLocation().distanceTo(robots[0].getLocation()) <= 6) {
+						if (rc.getLocation().distanceTo(robots[0].getLocation()) > 6) {
 							tryMove(toEnemy);
 						} else {
-							dodge();
+							if(!dodge()){
+								tryMove(toEnemy);
+							}
 						}
 						break;
 					case ARCHON:
 						if (robots.length > 1) {
 							tryMove(rc.getLocation().directionTo(robots[1].getLocation()));
+						}else{
+							tryMove(toEnemy);
 						}
 					default:
 						break;
