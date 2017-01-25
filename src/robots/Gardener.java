@@ -59,7 +59,7 @@ public strictfp class Gardener {
 					tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18);
 				}
 
-				if (!inGarden && isValidGardenPosition(rc.getLocation()) && isDistanceToOtherGardenersEnough()) {
+				if (!inGarden && isValidGardenPosition(rc.getLocation())) {
 					Direction[] directions = getDirections(12);
 					for (Direction dir : directions) {
 						MapLocation mapLocation = rc.getLocation().add(dir, RobotType.GARDENER.strideRadius);

@@ -106,31 +106,30 @@ public strictfp class Util {
 		Direction dir = rc.getLocation().directionTo(goalLocation);
 		float speed = rc.getType().strideRadius;
 		float minDistance = speed * speed;
-		
 
 		for (int i = 0; i <= NUM_CHECKS; i++) {
-			// 0, Pi and left rotations			
+			// 0, Pi and left rotations
 			MapLocation locationAfterMove = rc.getLocation().add(dir.rotateLeftRads(i * directionAngle), speed);
-			
-			if(checkMove(locationAfterMove, minDistance)){
+
+			if (checkMove(locationAfterMove, minDistance)) {
 				return true;
 			}
-			
+
 			if (i == 0 || i == NUM_CHECKS)
 				continue;
 
-			//right rotations
+			// right rotations
 			locationAfterMove = rc.getLocation().add(dir.rotateRightRads(i * directionAngle), speed);
 
-			if(checkMove(locationAfterMove, minDistance)){
+			if (checkMove(locationAfterMove, minDistance)) {
 				return true;
 			}
 
 		}
-		
+
 		// escape move
-		if(rc.canMove(path[lastPointer])){
-			if(!backtrack){
+		if (rc.canMove(path[lastPointer])) {
+			if (!backtrack) {
 				lastBeforeBacktrack = lastPointer;
 				backtrack = true;
 			}
@@ -141,18 +140,18 @@ public strictfp class Util {
 
 		return false;
 	}
-	
-	public static boolean checkMove(MapLocation locationAfterMove, float minDistance) throws GameActionException{
+
+	public static boolean checkMove(MapLocation locationAfterMove, float minDistance) throws GameActionException {
 		boolean letsMoveThere = true;
-		if(rc.canMove(locationAfterMove)){
+		if (rc.canMove(locationAfterMove)) {
 			for (MapLocation onPath : path) {
 				if (locationAfterMove.isWithinDistance(onPath, minDistance)) {
 					letsMoveThere = false;
 					break;
 				}
 			}
-			if(letsMoveThere){
-				if(backtrack){
+			if (letsMoveThere) {
+				if (backtrack) {
 					backtrack = false;
 					lastPointer = lastBeforeBacktrack;
 				}
@@ -164,9 +163,9 @@ public strictfp class Util {
 		}
 		return false;
 	}
-	
-	public static void debug_drawPath(){
-		for(MapLocation onPath: path){
+
+	public static void debug_drawPath() {
+		for (MapLocation onPath : path) {
 			rc.setIndicatorDot(onPath, 255, 0, 0);
 		}
 	}
@@ -264,8 +263,13 @@ public strictfp class Util {
 		return location;
 	}
 
+	public static boolean broadcastEnemy = false;
+	public static boolean attackBase = false;
+
 	/**
 	 * Get a direction in witch to find enemys
+	 * 
+	 * 1. listen to enemy broadcast 2. go to enemy base 3. explore
 	 * 
 	 * @return
 	 * @throws GameActionException
@@ -273,32 +277,64 @@ public strictfp class Util {
 	public static Direction getGeneralEnemyDirection() throws GameActionException {
 		int code = rc.readBroadcast(Broadcast.ENEMY_LOCATION);
 		if (code != 0) {
+			broadcastEnemy = true;
 			generalEnemyDirection = decode(code);
-			explore = null;
 		}
+
 		if (generalEnemyDirection == null) {
-			explore = null;
-			generalEnemyDirection = decode(code);
-			if (generalEnemyDirection == null) {
-				MapLocation[] enemyArchons = rc.getInitialArchonLocations(rc.getTeam().opponent());
-				int e = rand.nextInt(enemyArchons.length);
-				generalEnemyDirection = enemyArchons[e];
+			MapLocation enmarchon = getEnemyBase();
+			if (enmarchon == null) {
+				wander = true;
 			} else {
-				wander = false;
+				attackBase = true;
+				generalEnemyDirection = enmarchon;
 			}
 		}
 		if (rc.getLocation().distanceTo(generalEnemyDirection) <= 1) {
-			wander = true;
 			generalEnemyDirection = null;
-			rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
-		}
-		if (wander) {
-			if (explore == null) {
-				explore = randomDirection();
+			if (broadcastEnemy) {
+				rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
+				broadcastEnemy = false;
 			}
+			if (attackBase) {
+				killedArchon();
+				attackBase = false;
+			}
+		}
+		if (wander && generalEnemyDirection == null) {
+			explore = randomDirection();
 			generalEnemyDirection = rc.getLocation().add(explore, 20);
 		}
 		return rc.getLocation().directionTo(generalEnemyDirection);
+	}
+
+	public static MapLocation[] enemyArchons = null;
+	public static boolean[] deadBases = null;
+
+	/**
+	 * Return a enemy base that was not yet destroyed
+	 * 
+	 * @return
+	 */
+	public static MapLocation getEnemyBase() {
+		if (enemyArchons == null) {
+			enemyArchons = rc.getInitialArchonLocations(rc.getTeam().opponent());
+			deadBases = new boolean[enemyArchons.length];
+		}
+		for (int i = 0; i < enemyArchons.length; i++) {
+			if (!deadBases[i]) {
+				return enemyArchons[i];
+			}
+		}
+		return null;
+	}
+
+	public static int last = 0;
+
+	public static void killedArchon() {
+		if (last < deadBases.length) {
+			deadBases[last++] = true;
+		}
 	}
 
 	public static MapLocation getGeneralEnemyLocation() throws GameActionException {
