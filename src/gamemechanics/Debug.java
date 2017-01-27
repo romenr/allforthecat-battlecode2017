@@ -44,7 +44,7 @@ public class Debug {
 		}else{
 			System.out.println("Bytecode left " + Clock.getBytecodesLeft());
 		}
-		monitorByteCodeLimitLastCallRoundNum++;
+		monitorByteCodeLimitLastCallRoundNum = rc.getRoundNum();
 	}
 	
 }
