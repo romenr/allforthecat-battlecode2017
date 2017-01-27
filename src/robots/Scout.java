@@ -9,6 +9,8 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 import battlecode.common.Team;
 import battlecode.common.TreeInfo;
+import gamemechanics.Debug;
+import gamemechanics.Sensor;
 
 import static thecat.RobotPlayer.rc;
 import static gamemechanics.Broadcast.ENEMY_LOCATION;
@@ -38,8 +40,9 @@ public strictfp class Scout {
 
 				// Trees before Movement
 				debug_colorBulletTrees();
+				Sensor.updateSensorData();
 				shakeBulletTree();
-				RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+				RobotInfo[] robots = Sensor.getEnemy();
 				if (robots.length > 0 && tryToKillEnemyScout(robots)) {
 					debug_println("Fight!");
 				} else if (robots.length > 0) {
@@ -159,6 +162,7 @@ public strictfp class Scout {
 
 				// Clock.yield() makes the robot wait until the next turn, then
 				// it will perform this loop again
+				Debug.debug_monitorRobotByteCodeLimit();
 				Clock.yield();
 
 			} catch (Exception e) {
@@ -182,7 +186,7 @@ public strictfp class Scout {
 		// If there is already a Interesting tree update the Tree Info
 		if (bulletTree != null) {
 			updateBulletTreeInfoSucessfull = false;
-			TreeInfo[] trees = rc.senseNearbyTrees(-1, Team.NEUTRAL);
+			TreeInfo[] trees = Sensor.getTreeInfos();
 			for (TreeInfo tree : trees) {
 				if (tree.getID() == bulletTree.getID()) {
 					bulletTree = tree;
@@ -198,7 +202,7 @@ public strictfp class Scout {
 
 		// If there is no bulletTree search for one
 		if (bulletTree == null) {
-			TreeInfo[] trees = rc.senseNearbyTrees(-1, Team.NEUTRAL);
+			TreeInfo[] trees = Sensor.getTreeInfos();
 			for (TreeInfo tree : trees) {
 				// Trees without Bullets are not interesting
 				if (tree.getContainedBullets() > 0) {
@@ -233,7 +237,7 @@ public strictfp class Scout {
 	 * Color Trees within sight radius that Contain Bullets golden
 	 */
 	public static void debug_colorBulletTrees() {
-		TreeInfo[] bulletTrees = rc.senseNearbyTrees(-1, Team.NEUTRAL);
+		TreeInfo[] bulletTrees = Sensor.getTreeInfos();
 		for (TreeInfo tree : bulletTrees) {
 			if (tree.getContainedBullets() > 0) {
 				rc.setIndicatorDot(tree.getLocation(), 255, 215, 0);

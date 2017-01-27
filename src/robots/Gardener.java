@@ -9,6 +9,8 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 import battlecode.common.TreeInfo;
 import gamemechanics.Broadcast;
+import gamemechanics.Debug;
+import gamemechanics.Sensor;
 
 import static gamemechanics.Broadcast.*;
 import static thecat.RobotPlayer.rc;
@@ -48,7 +50,7 @@ public strictfp class Gardener {
 
 				// Starting strat
 				if (rc.getRoundNum() < 10 && rc.isBuildReady()) {
-					TreeInfo[] treeInfos = rc.senseNearbyTrees();
+					TreeInfo[] treeInfos = Sensor.getTreeInfos();
 					if (treeInfos.length > 4) {
 						tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18);
 					} else {
@@ -75,8 +77,7 @@ public strictfp class Gardener {
 				}
 
 				if (inGarden) {
-					if (rc.senseNearbyTrees(RobotType.GARDENER.bodyRadius + 2 * GameConstants.GENERAL_SPAWN_OFFSET,
-							rc.getTeam()).length == 1 && !hasBuildSoldier) {
+					if (getGardenSize() == 1 && !hasBuildSoldier) {
 						if (rc.canBuildRobot(RobotType.SOLDIER, unitBuildDirection)) {
 							rc.buildRobot(RobotType.SOLDIER, unitBuildDirection);
 							treesSinceSoldier = 0;
@@ -92,8 +93,7 @@ public strictfp class Gardener {
 						}
 					}
 					rc.setIndicatorDot(rc.getLocation().add(unitBuildDirection), 255, 0, 0);
-					if (rc.senseNearbyTrees(RobotType.GARDENER.bodyRadius + 2 * GameConstants.GENERAL_SPAWN_OFFSET,
-							rc.getTeam()).length == 5) {
+					if (getGardenSize() == 5) {
 						broadcastGardenerGardenMessage();
 					}
 				} else {
@@ -165,6 +165,7 @@ public strictfp class Gardener {
 
 				// Clock.yield() makes the robot wait until the next turn, then
 				// it will perform this loop again
+				Debug.debug_monitorRobotByteCodeLimit();
 				Clock.yield();
 
 			} catch (Exception e) {
@@ -247,14 +248,16 @@ public strictfp class Gardener {
 				&& !rc.isCircleOccupiedExceptByThisRobot(location, RADIUS);
 	}
 
-	/**
-	 * Check if there is enough space between this and other gardeners
-	 * 
-	 * @return true if there is enough space
-	 */
-	public static boolean isDistanceToOtherGardenersEnough() {
-		TreeInfo[] treeInfos = rc.senseNearbyTrees(RADIUS + 2.5f, rc.getTeam());
-		return treeInfos.length == 0;
+	public static TreeInfo[] garden;
+	public static int updated = -1;
+	
+	public static int getGardenSize(){
+		if(updated != rc.getRoundNum()){
+			garden = rc.senseNearbyTrees(RobotType.GARDENER.bodyRadius + 2 * GameConstants.GENERAL_SPAWN_OFFSET,
+					rc.getTeam());
+			updated = rc.getRoundNum();
+		}
+		return garden.length;
 	}
 
 }

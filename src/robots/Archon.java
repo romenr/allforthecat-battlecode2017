@@ -11,6 +11,8 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
+import gamemechanics.Debug;
+import gamemechanics.Sensor;
 
 public strictfp class Archon {
 
@@ -28,6 +30,8 @@ public strictfp class Archon {
 			try {
 
 				checkWinCondition();
+				
+				Sensor.updateSensorData();
 				
 				// After a certain amount of turns start buying Victory Points with a overhead of Bullets
 				if(rc.getRoundNum() > START_BUYING_VICTORY_POINTS_TURN){
@@ -73,7 +77,7 @@ public strictfp class Archon {
 					}
 				}
 				
-				RobotInfo[] robotInfos = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+				RobotInfo[] robotInfos = Sensor.getEnemy();
 				if(robotInfos.length >= 1 && rc.readBroadcast(ENEMY_LOCATION) == 0){
 					rc.broadcast(ENEMY_LOCATION, encode(robotInfos[0].getLocation()));
 				}
@@ -86,6 +90,7 @@ public strictfp class Archon {
 
 				// Clock.yield() makes the robot wait until the next turn, then
 				// it will perform this loop again
+				Debug.debug_monitorRobotByteCodeLimit();
 				Clock.yield();
 
 			} catch (Exception e) {

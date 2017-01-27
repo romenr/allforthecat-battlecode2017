@@ -299,7 +299,7 @@ public strictfp class Util {
 				generalEnemyDirection = enmarchon;
 			}
 		}else{
-			if (rc.getLocation().distanceTo(generalEnemyDirection) <= 1) {
+			if (rc.getLocation().distanceTo(generalEnemyDirection) <= 2) {
 				generalEnemyDirection = null;
 				if (broadcastEnemy) {
 					rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
@@ -613,30 +613,21 @@ public strictfp class Util {
 			return 0;
 		}
 	}
-
-	public static TreeInfo[] trees;
-	public static int treesUpdatedTurn = -1;
-	public static RobotInfo[][] robots = new RobotInfo[2][];
-	public static int[] robotsUpdatedRound = {-1, -1};
 	
 	public static float willCollideWith(Direction dir, MapLocation location, Team team) {
 		if (Team.NEUTRAL == team) {
-			if(treesUpdatedTurn != rc.getRoundNum()){
-				trees = rc.senseNearbyTrees(-1, team);
-				treesUpdatedTurn = rc.getRoundNum();
-			}
+			TreeInfo[] trees = Sensor.getTreeInfos();
+			Team enemyTeam = rc.getTeam().opponent();
 			for (TreeInfo tree : trees) {
+				if(tree.getTeam() == enemyTeam) continue;
 				float when = willCollideWith(dir, location, tree);
 				if (when > 0) {
 					return when;
 				}
 			}
 		} else {
-			if(robotsUpdatedRound[team.ordinal()] != rc.getRoundNum()){
-				robots[team.ordinal()] = rc.senseNearbyRobots(-1, team);
-				robotsUpdatedRound[team.ordinal()] = rc.getRoundNum();
-			}
-			for (RobotInfo robot : robots[team.ordinal()]) {
+			RobotInfo[] robotInfos = Sensor.getTeam(team);
+			for (RobotInfo robot : robotInfos) {
 				float when = willCollideWith(dir, location, robot);
 				if (when > 0) {
 					return when;

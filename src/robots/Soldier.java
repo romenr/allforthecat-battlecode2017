@@ -7,7 +7,9 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
+import gamemechanics.Debug;
 import gamemechanics.NeutralTrees;
+import gamemechanics.Sensor;
 import gamemechanics.Util;
 
 import static thecat.RobotPlayer.rc;
@@ -31,10 +33,12 @@ public strictfp class Soldier {
 			try {
 
 				checkWinCondition();
+				
+				Sensor.updateSensorData();
 
 				// See if there are any nearby enemy robots
-				RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
-				BulletInfo[] bulletInfos = rc.senseNearbyBullets();
+				RobotInfo[] robots = Sensor.getEnemy();
+				BulletInfo[] bulletInfos = Sensor.getBulletInfos();
 
 				// If there are some...
 				if (robots.length > 0) {
@@ -115,6 +119,7 @@ public strictfp class Soldier {
 
 				// Clock.yield() makes the robot wait until the next turn, then
 				// it will perform this loop again
+				Debug.debug_monitorRobotByteCodeLimit();
 				Clock.yield();
 
 			} catch (Exception e) {

@@ -18,7 +18,9 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
+import gamemechanics.Debug;
 import gamemechanics.NeutralTrees;
+import gamemechanics.Sensor;
 import gamemechanics.Util;
 
 public strictfp class Tank {
@@ -34,9 +36,11 @@ public strictfp class Tank {
 			// robot to explode
 			try {
 				checkWinCondition();
+				
+				Sensor.updateSensorData();
 
 				// See if there are any nearby enemy robots
-				RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+				RobotInfo[] robots = Sensor.getEnemy();
 				BulletInfo[] bulletInfos = rc.senseNearbyBullets();
 
 				// If there are some...
@@ -116,6 +120,7 @@ public strictfp class Tank {
 
 				// Clock.yield() makes the robot wait until the next turn, then
 				// it will perform this loop again
+				Debug.debug_monitorRobotByteCodeLimit();
 				Clock.yield();
 
 			} catch (Exception e) {

@@ -2,6 +2,7 @@ package gamemechanics;
 
 import static thecat.RobotPlayer.rc;
 
+import battlecode.common.Clock;
 import battlecode.common.RobotType;
 
 public class Debug {
@@ -28,6 +29,22 @@ public class Debug {
 			System.out.println("Robot count: " + rc.getRobotCount());
 			System.out.println("Tree count: " + rc.getTreeCount());
 		}
+	}
+	
+	private static int monitorByteCodeLimitLastCallRoundNum = -1;
+	/**
+	 * Check if the robot went past its ByteCode limit by checking round numbers
+	 */
+	public static void debug_monitorRobotByteCodeLimit(){
+		if(monitorByteCodeLimitLastCallRoundNum == -1) {
+			monitorByteCodeLimitLastCallRoundNum = rc.getRoundNum();
+		}
+		if(monitorByteCodeLimitLastCallRoundNum != rc.getRoundNum()){
+			System.out.println("ERROR: exeeded Bytecode limit by " + Clock.getBytecodeNum());
+		}else{
+			System.out.println("Bytecode left " + Clock.getBytecodesLeft());
+		}
+		monitorByteCodeLimitLastCallRoundNum++;
 	}
 	
 }

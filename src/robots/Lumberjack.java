@@ -7,6 +7,8 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
 import battlecode.common.TreeInfo;
+import gamemechanics.Debug;
+import gamemechanics.Sensor;
 import gamemechanics.Util;
 
 import static thecat.RobotPlayer.rc;
@@ -28,11 +30,13 @@ public strictfp class Lumberjack {
 			try {
 
 				checkWinCondition();
+				
+				Sensor.updateSensorData();
 
 				// Update the best tree
 				// if we cant sense it set it to null
 				if (best != null) {
-					TreeInfo[] trees = rc.senseNearbyTrees();
+					TreeInfo[] trees = Sensor.getTreeInfos();
 					int id = best.getID();
 					best = null;
 					for (TreeInfo t : trees) {
@@ -46,7 +50,7 @@ public strictfp class Lumberjack {
 				// Search a new best tree
 				if (best == null) {
 					best = null;
-					TreeInfo[] trees = rc.senseNearbyTrees();
+					TreeInfo[] trees = Sensor.getTreeInfos();
 					for (TreeInfo t : trees) {
 						if (t.getTeam() != rc.getTeam()) {
 							if (t.getContainedRobot() != null) {
@@ -75,7 +79,7 @@ public strictfp class Lumberjack {
 					rc.strike();
 				} else {
 					// No close robots, so search for robots within sight radius
-					robots = rc.senseNearbyRobots(-1, enemy);
+					robots = Sensor.getEnemy();
 
 					// If there is a robot, move towards it
 					if (robots.length > 0) {
@@ -110,7 +114,7 @@ public strictfp class Lumberjack {
 					}
 				}
 				if(!rc.hasAttacked()){
-					TreeInfo[] trees = rc.senseNearbyTrees();
+					TreeInfo[] trees = Sensor.getTreeInfos();
 					for (TreeInfo t : trees) {
 						if (t.getTeam() != rc.getTeam()) {
 							if (rc.canChop(t.getID())) {
@@ -123,6 +127,7 @@ public strictfp class Lumberjack {
 
 				// Clock.yield() makes the robot wait until the next turn, then
 				// it will perform this loop again
+				Debug.debug_monitorRobotByteCodeLimit();
 				Clock.yield();
 
 			} catch (Exception e) {
