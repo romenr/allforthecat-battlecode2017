@@ -42,7 +42,7 @@ public strictfp class Gardener {
 			// robot to explode
 			try {
 				checkWinCondition();
-
+				Sensor.updateSensorData();
 				soonInGarden = false;
 				turnSinceSpawn++;
 				broadcastGardenerAliveMessage();

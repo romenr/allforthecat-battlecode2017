@@ -34,7 +34,7 @@ public strictfp class RobotPlayer {
 		// Save the Number of Archons per Team
 		numberOfArchons = initialArchonLocations[0].length;
 		
-		Debug.debug_println("Startup Bytecosts: " + Clock.getBytecodeNum());
+		//Debug.debug_println("Startup Bytecosts: " + Clock.getBytecodeNum());
 
 		// Here, we've separated the controls into a different method for each
 		// RobotType.

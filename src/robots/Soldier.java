@@ -33,7 +33,7 @@ public strictfp class Soldier {
 			try {
 
 				checkWinCondition();
-				
+
 				Sensor.updateSensorData();
 
 				// See if there are any nearby enemy robots
@@ -56,6 +56,7 @@ public strictfp class Soldier {
 					int shootAt = 0;
 					boolean shootMoreThanNeeded = false;
 
+					Debug.debug_startCountingBytecode("Movement");
 					switch (robots[0].type) {
 					case LUMBERJACK:
 						if (rc.getLocation().distanceTo(robots[0].getLocation()) < 5.6f) {
@@ -75,7 +76,7 @@ public strictfp class Soldier {
 							tryMove(toEnemy);
 						} else {
 							if (!dodge()) {
-								if(!tryMove(toEnemy.rotateLeftDegrees(135))){
+								if (!tryMove(toEnemy.rotateLeftDegrees(135))) {
 									tryMove(toEnemy.rotateRightDegrees(135));
 								}
 							}
@@ -92,7 +93,7 @@ public strictfp class Soldier {
 					}
 					while (shootAt < robots.length) {
 						Direction shootTo = rc.getLocation().directionTo(robots[shootAt].location);
-						if (rc.canFireTriadShot() && (canShootTriadTo(shootTo, shootMoreThanNeeded?0:1))) {
+						if (rc.canFireTriadShot() && (canShootTriadTo(shootTo, shootMoreThanNeeded ? 0 : 1))) {
 							rc.fireTriadShot(shootTo);
 							break;
 						}
@@ -105,14 +106,15 @@ public strictfp class Soldier {
 				} else if (bulletInfos.length > 0 && dodge()) {
 					// Dodged bullet
 				} else {
-					if (!Util.moveToTarget(Util.getGeneralEnemyLocation())) {
-						if (!tryMove(getWanderMapDirection())) {
-							System.out.println("I did not Move");
-						}
+					if (!rc.hasMoved()) {
+						if (!Util.moveToTarget(Util.getGeneralEnemyLocation())) {
+							if (!tryMove(getWanderMapDirection())) {
+								// System.out.println("I did not Move");
+							}
 
+						}
 					}
 				}
-
 				debug_drawPath();
 
 				NeutralTrees.shakeBulletTree();

@@ -4,10 +4,12 @@ import static thecat.RobotPlayer.rc;
 import static gamemechanics.Debug.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import battlecode.common.BodyInfo;
 import battlecode.common.BulletInfo;
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -20,7 +22,7 @@ import battlecode.common.TreeInfo;
 public strictfp class Util {
 
 	public static final int NUMBER_DIRECTIONS = 8;
-	public static MapLocation generalEnemyDirection = null;
+	public static MapLocation generalEnemyLocation = null;
 	public static Boolean clockwise = null;
 	static Direction dir = null;
 	public static Random rand = new Random(rc.getID());
@@ -174,6 +176,7 @@ public strictfp class Util {
 	}
 
 	public static void debug_drawPath() {
+		if(path == null) return;
 		for (MapLocation onPath : path) {
 			rc.setIndicatorDot(onPath, 255, 0, 0);
 		}
@@ -287,20 +290,20 @@ public strictfp class Util {
 		int code = rc.readBroadcast(Broadcast.ENEMY_LOCATION);
 		if (code != 0) {
 			broadcastEnemy = true;
-			generalEnemyDirection = decode(code);
+			generalEnemyLocation = decode(code);
 		}
 
-		if (generalEnemyDirection == null) {
+		if (generalEnemyLocation == null) {
 			MapLocation enmarchon = getEnemyBase();
 			if (enmarchon == null) {
 				wander = true;
 			} else {
 				attackBase = true;
-				generalEnemyDirection = enmarchon;
+				generalEnemyLocation = enmarchon;
 			}
-		}else{
-			if (rc.getLocation().distanceTo(generalEnemyDirection) <= 2) {
-				generalEnemyDirection = null;
+		} else {
+			if (rc.getLocation().distanceTo(generalEnemyLocation) <= 2) {
+				generalEnemyLocation = null;
 				if (broadcastEnemy) {
 					rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
 					broadcastEnemy = false;
@@ -311,11 +314,12 @@ public strictfp class Util {
 				}
 			}
 		}
-		if (wander && generalEnemyDirection == null) {
+		if (wander && generalEnemyLocation == null) {
 			explore = randomDirection();
-			generalEnemyDirection = rc.getLocation().add(explore, 20);
+			generalEnemyLocation = rc.getLocation().add(explore, 20);
 		}
-		return rc.getLocation().directionTo(generalEnemyDirection);
+		rc.setIndicatorDot(generalEnemyLocation, 0x4b, 00, 0x82);
+		return rc.getLocation().directionTo(generalEnemyLocation);
 	}
 
 	public static MapLocation[] enemyArchons = null;
@@ -349,7 +353,7 @@ public strictfp class Util {
 
 	public static MapLocation getGeneralEnemyLocation() throws GameActionException {
 		getGeneralEnemyDirection();
-		return generalEnemyDirection;
+		return generalEnemyLocation;
 	}
 
 	public static Direction getWanderMapDirection() {

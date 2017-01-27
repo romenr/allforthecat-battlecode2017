@@ -53,7 +53,6 @@ public strictfp class Archon {
 						rc.broadcast(GARDENER_COUNT_ODD_TURN_CHANNEL, 0);
 						rc.broadcast(GARDENER_GARDEN_ODD_TURN_CHANNEL, 0);
 					}
-					System.out.println(getGardenerAliveCount());
 				}
 				if(rc.getRoundNum() <= 10){
 					if(rc.readBroadcast(STARTING_GARDENER_BUILD) == 0){
