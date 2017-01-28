@@ -55,9 +55,9 @@ public strictfp class Archon {
 					}
 				}
 				if(rc.getRoundNum() <= 10){
-					if(rc.readBroadcast(STARTING_GARDENER_BUILD) == 0){
+					if(rc.readBroadcast(STARTING_GARDENER_BUILD_CHANNEL) == 0){
 						if(tryBuildGardener(getGoodGardenerDirection(), 10, 18)){
-							rc.broadcast(STARTING_GARDENER_BUILD, 1);
+							rc.broadcast(STARTING_GARDENER_BUILD_CHANNEL, 1);
 						}
 					}
 				}else if(rc.getRoundNum() > 800){
@@ -77,8 +77,8 @@ public strictfp class Archon {
 				}
 				
 				RobotInfo[] robotInfos = Sensor.getEnemy();
-				if(robotInfos.length >= 1 && rc.readBroadcast(ENEMY_LOCATION) == 0){
-					rc.broadcast(ENEMY_LOCATION, encode(robotInfos[0].getLocation()));
+				if(robotInfos.length >= 1 && rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0){
+					rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robotInfos[0].getLocation()));
 				}
 				
 				tryMove(getWanderMapDirection());

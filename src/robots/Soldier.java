@@ -13,7 +13,7 @@ import gamemechanics.Sensor;
 import gamemechanics.Util;
 
 import static thecat.RobotPlayer.rc;
-import static gamemechanics.Broadcast.ENEMY_LOCATION;
+import static gamemechanics.Broadcast.ENEMY_LOCATION_CHANNEL;
 import static gamemechanics.Util.*;
 
 public strictfp class Soldier {
@@ -42,8 +42,8 @@ public strictfp class Soldier {
 
 				// If there are some...
 				if (robots.length > 0) {
-					if (rc.readBroadcast(ENEMY_LOCATION) == 0) {
-						rc.broadcast(ENEMY_LOCATION, encode(robots[0].getLocation()));
+					if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
+						rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
 					}
 
 					// And we have enough bullets, and haven't attacked yet this

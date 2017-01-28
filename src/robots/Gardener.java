@@ -138,10 +138,10 @@ public strictfp class Gardener {
 //						}
 //					}
 					if (hasBuildSoldier || treesSinceSoldier < 2) {
-						if (rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) < MIN_LUMBERJACKS
+						if (rc.readBroadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL) < MIN_LUMBERJACKS
 								&& rc.canBuildRobot(RobotType.LUMBERJACK, unitBuildDirection)) {
 							rc.buildRobot(RobotType.LUMBERJACK, unitBuildDirection);
-							rc.broadcast(Broadcast.LUMBERJACK_COUNT, rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) + 1);
+							rc.broadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL, rc.readBroadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL) + 1);
 						}
 					}
 					if (rc.canBuildRobot(RobotType.SOLDIER, unitBuildDirection)) {
@@ -151,11 +151,11 @@ public strictfp class Gardener {
 				} else {
 					if (!soonInGarden) {
 						Direction dir = randomDirection();
-						if (rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) < MIN_LUMBERJACKS
+						if (rc.readBroadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL) < MIN_LUMBERJACKS
 								&& rc.canBuildRobot(RobotType.LUMBERJACK, dir)) {
 							if (tryBuildRobot(dir, RobotType.LUMBERJACK)) {
-								rc.broadcast(Broadcast.LUMBERJACK_COUNT,
-										rc.readBroadcast(Broadcast.LUMBERJACK_COUNT) + 1);
+								rc.broadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL,
+										rc.readBroadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL) + 1);
 							}
 						}
 					}

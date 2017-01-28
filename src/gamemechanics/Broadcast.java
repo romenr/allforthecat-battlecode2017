@@ -14,11 +14,12 @@ public strictfp class Broadcast {
 	public static final int GARDENER_COUNT_EVEN_TURN_CHANNEL = 1;
 	public static final int GARDENER_COUNT_ODD_TURN_CHANNEL = 2;
 	public static final int SCOUT_IS_BUILD_CHANNEL = 3;
-	public static final int LUMBERJACK_COUNT = 4;
+	public static final int LUMBERJACK_COUNT_CHANNEL = 4;
 	public static final int GARDENER_GARDEN_EVEN_TURN_CHANNEL = 5;
 	public static final int GARDENER_GARDEN_ODD_TURN_CHANNEL = 6;
-	public static final int ENEMY_LOCATION = 7;
-	public static final int STARTING_GARDENER_BUILD = 8;
+	public static final int ENEMY_LOCATION_CHANNEL = 7;
+	public static final int STARTING_GARDENER_BUILD_CHANNEL = 8;
+	public static final int ENEMY_ARCHONS_DESTROYED_CHANNEL = 9;
 	
 	/**
 	 * Returns the Number of Gardeners who where alive last Turn.

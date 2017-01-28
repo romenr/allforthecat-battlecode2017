@@ -1,6 +1,6 @@
 package robots;
 
-import static gamemechanics.Broadcast.ENEMY_LOCATION;
+import static gamemechanics.Broadcast.ENEMY_LOCATION_CHANNEL;
 import static gamemechanics.Util.canShootBulletTo;
 import static gamemechanics.Util.canShootPentandTo;
 import static gamemechanics.Util.canShootTriadTo;
@@ -45,8 +45,8 @@ public strictfp class Tank {
 
 				// If there are some...
 				if (robots.length > 0) {
-					if (rc.readBroadcast(ENEMY_LOCATION) == 0) {
-						rc.broadcast(ENEMY_LOCATION, encode(robots[0].getLocation()));
+					if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
+						rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
 					}
 
 					// And we have enough bullets, and haven't attacked yet this

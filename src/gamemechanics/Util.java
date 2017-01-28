@@ -263,19 +263,7 @@ public strictfp class Util {
 	 * @return MapLocation of the nearest Archon Start Point
 	 */
 	public static MapLocation getNearestInitialArchonLocation(Team team) {
-		int teamNr;
-		switch (team) {
-		case A:
-			teamNr = 0;
-			break;
-		case B:
-			teamNr = 1;
-			break;
-		case NEUTRAL:
-			debug_println("Neutrals dont have Archons");
-		default:
-			return null;
-		}
+		int teamNr = team.ordinal();
 		// Getting Locations is expensive do it only once
 		if (initialArchonLocation[teamNr] == null) {
 			initialArchonLocation[teamNr] = rc.getInitialArchonLocations(team);
@@ -307,31 +295,48 @@ public strictfp class Util {
 	}
 
 	public static MapLocation[] enemyArchons = null;
-	public static boolean[] deadBases = null;
+	public static boolean[] destroyedBases = null;
 
 	/**
 	 * Return a enemy base that was not yet destroyed
 	 * 
 	 * @return
+	 * @throws GameActionException 
 	 */
-	public static MapLocation getEnemyBase() {
+	public static MapLocation getEnemyBase() throws GameActionException {
 		if (enemyArchons == null) {
 			enemyArchons = rc.getInitialArchonLocations(rc.getTeam().opponent());
-			deadBases = new boolean[enemyArchons.length];
+			destroyedBases = new boolean[enemyArchons.length];
+			
 		}
+		updateDestroyedBases();
 		for (int i = 0; i < enemyArchons.length; i++) {
-			if (!deadBases[i]) {
+			if (!destroyedBases[i]) {
 				return enemyArchons[i];
 			}
 		}
 		return null;
 	}
+	
+	public static void updateDestroyedBases() throws GameActionException{
+		int destroyed = rc.readBroadcast(Broadcast.ENEMY_ARCHONS_DESTROYED_CHANNEL);
+		for(int i = 0; i < destroyedBases.length; i++){
+			int archoni = destroyed >> i;
+			if(!destroyedBases[i] && (archoni & 1) == 1){
+				destroyedBases[i] = true;
+				last++;
+			}
+		}
+	}
 
 	public static int last = 0;
 
-	public static void killedArchon() {
-		if (last < deadBases.length) {
-			deadBases[last++] = true;
+	public static void killedArchon() throws GameActionException {
+		if (last < destroyedBases.length) {
+			int data = rc.readBroadcast(Broadcast.ENEMY_ARCHONS_DESTROYED_CHANNEL);
+			data = data | (1 << last);
+			rc.broadcast(Broadcast.ENEMY_ARCHONS_DESTROYED_CHANNEL, data);
+			destroyedBases[last++] = true;
 		}
 	}
 
@@ -343,7 +348,7 @@ public strictfp class Util {
 	 */
 	public static MapLocation getGeneralEnemyLocation() throws GameActionException {
 		// If Enemy Location is set run there
-		int code = rc.readBroadcast(Broadcast.ENEMY_LOCATION);
+		int code = rc.readBroadcast(Broadcast.ENEMY_LOCATION_CHANNEL);
 		if (code != 0) {
 			broadcastEnemy = true;
 			attackBase = false;
@@ -355,7 +360,7 @@ public strictfp class Util {
 			generalEnemyLocation = null;
 			// Broadcast that we checked the location out
 			if (broadcastEnemy) {
-				rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
+				rc.broadcast(Broadcast.ENEMY_LOCATION_CHANNEL, 0);
 				broadcastEnemy = false;
 			}
 			if (attackBase) {

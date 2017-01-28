@@ -13,7 +13,7 @@ import gamemechanics.Debug;
 import gamemechanics.Sensor;
 
 import static thecat.RobotPlayer.rc;
-import static gamemechanics.Broadcast.ENEMY_LOCATION;
+import static gamemechanics.Broadcast.ENEMY_LOCATION_CHANNEL;
 import static gamemechanics.Util.*;
 import static gamemechanics.Debug.*;
 import static gamemechanics.NeutralTrees.shakeBulletTree;
@@ -46,8 +46,8 @@ public strictfp class Scout {
 				if (robots.length > 0 && tryToKillEnemyScout(robots)) {
 					debug_println("Fight!");
 				} else if (robots.length > 0) {
-					if (rc.readBroadcast(ENEMY_LOCATION) == 0) {
-						rc.broadcast(ENEMY_LOCATION, encode(robots[0].getLocation()));
+					if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
+						rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
 					}
 
 					MapLocation myLocation = rc.getLocation();
