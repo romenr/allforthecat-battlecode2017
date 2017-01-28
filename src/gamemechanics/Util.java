@@ -4,12 +4,10 @@ import static thecat.RobotPlayer.rc;
 import static gamemechanics.Debug.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
 
 import battlecode.common.BodyInfo;
 import battlecode.common.BulletInfo;
-import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -277,6 +275,7 @@ public strictfp class Util {
 
 	public static boolean broadcastEnemy = false;
 	public static boolean attackBase = false;
+	private static int wanderTime = 0;
 
 	/**
 	 * Get a direction in witch to find enemys
@@ -287,36 +286,52 @@ public strictfp class Util {
 	 * @throws GameActionException
 	 */
 	public static Direction getGeneralEnemyDirection() throws GameActionException {
+		// If Enemy Location is set run there
 		int code = rc.readBroadcast(Broadcast.ENEMY_LOCATION);
 		if (code != 0) {
 			broadcastEnemy = true;
+			attackBase = false;
 			generalEnemyLocation = decode(code);
 		}
 
+		//Check if were at our destination
+		if (generalEnemyLocation != null && rc.getLocation().distanceTo(generalEnemyLocation) <= 3) {
+			generalEnemyLocation = null;
+			// Broadcast that we checked the location out
+			if (broadcastEnemy) {
+				rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
+				broadcastEnemy = false;
+			}
+			if (attackBase) {
+				killedArchon();
+				attackBase = false;
+			}
+		}
+		
+		// If enemy Location is not set try to run to an archon
 		if (generalEnemyLocation == null) {
+			// get a archon witch we didn't yet go to
 			MapLocation enmarchon = getEnemyBase();
 			if (enmarchon == null) {
+				//No more archons go search for enemy's
 				wander = true;
 			} else {
 				attackBase = true;
 				generalEnemyLocation = enmarchon;
 			}
-		} else {
-			if (rc.getLocation().distanceTo(generalEnemyLocation) <= 2) {
+		}
+		if(wander){
+			wanderTime++;
+			//Don't try to long
+			if(wanderTime > 60){
 				generalEnemyLocation = null;
-				if (broadcastEnemy) {
-					rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
-					broadcastEnemy = false;
-				}
-				if (attackBase) {
-					killedArchon();
-					attackBase = false;
-				}
 			}
 		}
+		// Search enemy's
 		if (wander && generalEnemyLocation == null) {
 			explore = randomDirection();
 			generalEnemyLocation = rc.getLocation().add(explore, 20);
+			wanderTime = 0;
 		}
 		rc.setIndicatorDot(generalEnemyLocation, 0x4b, 00, 0x82);
 		return rc.getLocation().directionTo(generalEnemyLocation);
