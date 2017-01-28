@@ -80,16 +80,17 @@ public strictfp class Util {
 	public static void checkWinCondition() throws GameActionException {
 		// Check if we can win now
 		if ((rc.getTeamBullets() / rc.getVictoryPointCost()) + rc.getTeamVictoryPoints() >= 1000) {
-			// Buy the Win
+			// Buy the Win, erm... i mean donate for the good cause
 			rc.donate(rc.getTeamBullets());
 		}
-		
-		if(rc.getRoundNum() == rc.getRoundLimit()-1){
+		// Donate everything leftover the last round
+		if (rc.getRoundNum() == rc.getRoundLimit() - 1) {
 			rc.donate(rc.getTeamBullets());
 		}
-		
-		if(rc.getRobotCount() == 1 && rc.getType() != RobotType.ARCHON){
-			rc.donate((rc.getTeamBullets()/rc.getVictoryPointCost())*rc.getVictoryPointCost());
+		// If your the last one standing donate as much as you can and hope for
+		// the best
+		if (rc.getRobotCount() == 1 && rc.getType() != RobotType.ARCHON) {
+			rc.donate((rc.getTeamBullets() / rc.getVictoryPointCost()) * rc.getVictoryPointCost());
 		}
 	}
 
@@ -101,7 +102,22 @@ public strictfp class Util {
 	private static int lastBeforeBacktrack = 0;
 	private static boolean backtrack = false;
 
-	public static boolean moveToTarget(MapLocation goalLocation) throws GameActionException {
+	/**
+	 * 
+	 * This is my implementation of the slug Pathing algorithm. I use a Array as
+	 * a ring to store the path the robot walked and added backtracking. That
+	 * means if the robot gets stuck it follows its own path back, until it's
+	 * not stuck anymore. TODO 1.) Add a Lookahead so that the robot dosen't
+	 * need to go the path witch he will backtrack anyways. 2.) Check if the
+	 * Robot has left a certain area in x Turns. Maybe with a second slug
+	 * algorithm witch has a separate list with fewer points but a lot bigger
+	 * radius.
+	 * 
+	 * @param goalLocation
+	 * @return
+	 * @throws GameActionException
+	 */
+	public static boolean moveTo(MapLocation goalLocation) throws GameActionException {
 		if (rc.hasMoved() || rc.getLocation().equals(goalLocation))
 			return false;
 
@@ -174,7 +190,8 @@ public strictfp class Util {
 	}
 
 	public static void debug_drawPath() {
-		if(path == null) return;
+		if (path == null)
+			return;
 		for (MapLocation onPath : path) {
 			rc.setIndicatorDot(onPath, 255, 0, 0);
 		}
@@ -286,55 +303,7 @@ public strictfp class Util {
 	 * @throws GameActionException
 	 */
 	public static Direction getGeneralEnemyDirection() throws GameActionException {
-		// If Enemy Location is set run there
-		int code = rc.readBroadcast(Broadcast.ENEMY_LOCATION);
-		if (code != 0) {
-			broadcastEnemy = true;
-			attackBase = false;
-			generalEnemyLocation = decode(code);
-		}
-
-		//Check if were at our destination
-		if (generalEnemyLocation != null && rc.getLocation().distanceTo(generalEnemyLocation) <= 3) {
-			generalEnemyLocation = null;
-			// Broadcast that we checked the location out
-			if (broadcastEnemy) {
-				rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
-				broadcastEnemy = false;
-			}
-			if (attackBase) {
-				killedArchon();
-				attackBase = false;
-			}
-		}
-		
-		// If enemy Location is not set try to run to an archon
-		if (generalEnemyLocation == null) {
-			// get a archon witch we didn't yet go to
-			MapLocation enmarchon = getEnemyBase();
-			if (enmarchon == null) {
-				//No more archons go search for enemy's
-				wander = true;
-			} else {
-				attackBase = true;
-				generalEnemyLocation = enmarchon;
-			}
-		}
-		if(wander){
-			wanderTime++;
-			//Don't try to long
-			if(wanderTime > 60){
-				generalEnemyLocation = null;
-			}
-		}
-		// Search enemy's
-		if (wander && generalEnemyLocation == null) {
-			explore = randomDirection();
-			generalEnemyLocation = rc.getLocation().add(explore, 20);
-			wanderTime = 0;
-		}
-		rc.setIndicatorDot(generalEnemyLocation, 0x4b, 00, 0x82);
-		return rc.getLocation().directionTo(generalEnemyLocation);
+		return rc.getLocation().directionTo(getGeneralEnemyLocation());
 	}
 
 	public static MapLocation[] enemyArchons = null;
@@ -366,8 +335,61 @@ public strictfp class Util {
 		}
 	}
 
+	/**
+	 * Decides what the next goal of this robot should be used by combat units.
+	 * 
+	 * @return A MapLocation where the unit should go to
+	 * @throws GameActionException
+	 */
 	public static MapLocation getGeneralEnemyLocation() throws GameActionException {
-		getGeneralEnemyDirection();
+		// If Enemy Location is set run there
+		int code = rc.readBroadcast(Broadcast.ENEMY_LOCATION);
+		if (code != 0) {
+			broadcastEnemy = true;
+			attackBase = false;
+			generalEnemyLocation = decode(code);
+		}
+
+		// Check if were at our destination
+		if (generalEnemyLocation != null && rc.getLocation().distanceTo(generalEnemyLocation) <= 3) {
+			generalEnemyLocation = null;
+			// Broadcast that we checked the location out
+			if (broadcastEnemy) {
+				rc.broadcast(Broadcast.ENEMY_LOCATION, 0);
+				broadcastEnemy = false;
+			}
+			if (attackBase) {
+				killedArchon();
+				attackBase = false;
+			}
+		}
+
+		// If enemy Location is not set try to run to an archon
+		if (generalEnemyLocation == null) {
+			// get a archon witch we didn't yet go to
+			MapLocation enmarchon = getEnemyBase();
+			if (enmarchon == null) {
+				// No more archons go search for enemy's
+				wander = true;
+			} else {
+				attackBase = true;
+				generalEnemyLocation = enmarchon;
+			}
+		}
+		if (wander) {
+			wanderTime++;
+			// Don't try to long
+			if (wanderTime > 60) {
+				generalEnemyLocation = null;
+			}
+		}
+		// Search enemy's
+		if (wander && generalEnemyLocation == null) {
+			explore = randomDirection();
+			generalEnemyLocation = rc.getLocation().add(explore, 20);
+			wanderTime = 0;
+		}
+		rc.setIndicatorDot(generalEnemyLocation, 0x4b, 00, 0x82);
 		return generalEnemyLocation;
 	}
 

@@ -91,7 +91,7 @@ public strictfp class Lumberjack {
 						case SCOUT:
 						case ARCHON:
 						case SOLDIER:
-							Util.moveToTarget(enemyLocation);
+							Util.moveTo(enemyLocation);
 							break;
 						case TANK:
 							// runaway aaaaa
@@ -102,14 +102,14 @@ public strictfp class Lumberjack {
 						}
 						
 					} else if (best == null) {
-						if (!Util.moveToTarget(getGeneralEnemyLocation())) {
+						if (!Util.moveTo(getGeneralEnemyLocation())) {
 						}
 
 					} else {
 						if (rc.canChop(best.getID())) {
 							rc.chop(best.getID());
 						} else {
-							Util.moveToTarget(best.getLocation());
+							Util.moveTo(best.getLocation());
 						}
 					}
 				}

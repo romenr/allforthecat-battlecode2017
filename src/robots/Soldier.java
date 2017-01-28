@@ -107,7 +107,7 @@ public strictfp class Soldier {
 					// Dodged bullet
 				} else {
 					if (!rc.hasMoved()) {
-						if (!Util.moveToTarget(Util.getGeneralEnemyLocation())) {
+						if (!Util.moveTo(Util.getGeneralEnemyLocation())) {
 							if (!tryMove(getWanderMapDirection())) {
 								// System.out.println("I did not Move");
 							}
