@@ -31,8 +31,13 @@ public strictfp class Gardener {
 	static int defenseScouts = 0;
 	static boolean hasBuildSoldier = false;
 	static boolean soonInGarden = false;
-
+	static boolean firstGardener = false;
+	static boolean fistStep = false;
+	
 	public static void run() throws GameActionException {
+		if(rc.getRoundNum() < 10){
+			firstGardener = true;
+		}
 
 		// The code you want your robot to perform every round should be in this
 		// loop
@@ -49,16 +54,23 @@ public strictfp class Gardener {
 				shakeBulletTree();
 
 				// Starting strat
-				if (rc.getRoundNum() < 10 && rc.isBuildReady()) {
+				if (firstGardener && !fistStep && rc.isBuildReady()) {
 					TreeInfo[] treeInfos = Sensor.getTreeInfos();
 					if (treeInfos.length > 4) {
-						tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18);
+						if(tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18)){
+							fistStep = true;
+						}
 					} else {
-						tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18);
+						if(tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18)){
+							fistStep = true;
+						}
 					}
-				}
-				if (rc.getRoundNum() < 20 && rc.isBuildReady()) {
-					tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18);
+				}else{
+					if (firstGardener && fistStep && rc.isBuildReady()) {
+						if(tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18)){
+							firstGardener = false;
+						}
+					}
 				}
 
 				if (!inGarden && isValidGardenPosition(rc.getLocation())) {
