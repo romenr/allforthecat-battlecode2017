@@ -24,6 +24,7 @@ public strictfp class Gardener {
 	static RobotInfo archon = null;
 	static boolean inGarden = false;
 	static Direction unitBuildDirection = null;
+	static MapLocation unitSpawnLocation;
 	static final float GARDEN_SIZE = 3 + 4 * GameConstants.GENERAL_SPAWN_OFFSET;
 	public static final int MIN_LUMBERJACKS = 2;
 	public static final int MAX_LUMBERJACKS = 3 * MIN_LUMBERJACKS;
@@ -33,9 +34,9 @@ public strictfp class Gardener {
 	static boolean soonInGarden = false;
 	static boolean firstGardener = false;
 	static boolean fistStep = false;
-	
+
 	public static void run() throws GameActionException {
-		if(rc.getRoundNum() < 10){
+		if (rc.getRoundNum() < 10) {
 			firstGardener = true;
 		}
 
@@ -58,17 +59,17 @@ public strictfp class Gardener {
 				if (firstGardener && !fistStep && rc.isBuildReady()) {
 					TreeInfo[] treeInfos = Sensor.getTreeInfos();
 					if (treeInfos.length > 4) {
-						if(tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18)){
+						if (tryBuildRobot(randomDirection(), RobotType.LUMBERJACK, 10, 18)) {
 							fistStep = true;
 						}
 					} else {
-						if(tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18)){
+						if (tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18)) {
 							fistStep = true;
 						}
 					}
-				}else{
+				} else {
 					if (firstGardener && fistStep && rc.isBuildReady()) {
-						if(tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18)){
+						if (tryBuildRobot(randomDirection(), RobotType.SOLDIER, 10, 18)) {
 							firstGardener = false;
 						}
 					}
@@ -87,6 +88,8 @@ public strictfp class Gardener {
 					inGarden = true;
 					unitBuildDirection = rc.getLocation()
 							.directionTo(getNearestInitialArchonLocation(rc.getTeam().opponent()));
+					unitSpawnLocation = rc.getLocation().add(unitBuildDirection, RobotType.SOLDIER.bodyRadius
+							+ RobotType.GARDENER.bodyRadius + GameConstants.GENERAL_SPAWN_OFFSET);
 				}
 
 				if (inGarden) {
@@ -97,7 +100,7 @@ public strictfp class Gardener {
 							hasBuildSoldier = true;
 						}
 					}
-					if (treesSinceSoldier < 2) {
+					if (treesSinceSoldier < 2 || rc.isCircleOccupied(unitSpawnLocation, RobotType.SOLDIER.bodyRadius)) {
 						for (int i = 1; i < 6; i++) {
 							if (rc.canPlantTree(unitBuildDirection.rotateLeftDegrees(60 * i))) {
 								rc.plantTree(unitBuildDirection.rotateLeftDegrees(60 * i));
@@ -126,7 +129,7 @@ public strictfp class Gardener {
 							break;
 					}
 				}
-				
+
 				if (!inGarden && !rc.hasMoved()) {
 					tryMove(randomDirection());
 				}
@@ -154,7 +157,8 @@ public strictfp class Gardener {
 						if (rc.readBroadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL) < MIN_LUMBERJACKS
 								&& rc.canBuildRobot(RobotType.LUMBERJACK, unitBuildDirection)) {
 							rc.buildRobot(RobotType.LUMBERJACK, unitBuildDirection);
-							rc.broadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL, rc.readBroadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL) + 1);
+							rc.broadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL,
+									rc.readBroadcast(Broadcast.LUMBERJACK_COUNT_CHANNEL) + 1);
 						}
 					}
 					if (rc.canBuildRobot(RobotType.SOLDIER, unitBuildDirection)) {
@@ -263,9 +267,9 @@ public strictfp class Gardener {
 
 	public static TreeInfo[] garden;
 	public static int updated = -1;
-	
-	public static int getGardenSize(){
-		if(updated != rc.getRoundNum()){
+
+	public static int getGardenSize() {
+		if (updated != rc.getRoundNum()) {
 			garden = rc.senseNearbyTrees(RobotType.GARDENER.bodyRadius + 2 * GameConstants.GENERAL_SPAWN_OFFSET,
 					rc.getTeam());
 			updated = rc.getRoundNum();
