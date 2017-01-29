@@ -52,6 +52,7 @@ public strictfp class Gardener {
 				turnSinceSpawn++;
 				broadcastGardenerAliveMessage();
 				shakeBulletTree();
+				Broadcast.broadcastEnemySeen();
 
 				// Starting strat
 				if (firstGardener && !fistStep && rc.isBuildReady()) {

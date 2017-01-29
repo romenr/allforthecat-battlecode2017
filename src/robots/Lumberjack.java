@@ -7,6 +7,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
 import battlecode.common.TreeInfo;
+import gamemechanics.Broadcast;
 import gamemechanics.Debug;
 import gamemechanics.Sensor;
 import gamemechanics.Util;
@@ -69,6 +70,7 @@ public strictfp class Lumberjack {
 				RobotInfo[] robots = rc.senseNearbyRobots(GameConstants.LUMBERJACK_STRIKE_RADIUS, enemy);
 				RobotInfo[] allies = rc.senseNearbyRobots(GameConstants.LUMBERJACK_STRIKE_RADIUS, rc.getTeam());
 				if (robots.length > 0 && !rc.hasAttacked()) {
+					Broadcast.broadcastEnemySeen();
 					// Use strike() to hit all nearby robots!
 					if(allies.length > 0){
 						// Move away from allie

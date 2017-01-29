@@ -10,7 +10,7 @@ import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
-import battlecode.common.RobotInfo;
+import gamemechanics.Broadcast;
 import gamemechanics.Debug;
 import gamemechanics.Sensor;
 
@@ -76,10 +76,7 @@ public strictfp class Archon {
 					}
 				}
 				
-				RobotInfo[] robotInfos = Sensor.getEnemy();
-				if(robotInfos.length >= 1 && rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0){
-					rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robotInfos[0].getLocation()));
-				}
+				Broadcast.broadcastEnemySeen();
 				
 				tryMove(getWanderMapDirection());
 				

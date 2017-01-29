@@ -8,13 +8,13 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
+import gamemechanics.Broadcast;
 import gamemechanics.Debug;
 import gamemechanics.NeutralTrees;
 import gamemechanics.Sensor;
 import gamemechanics.Util;
 
 import static thecat.RobotPlayer.rc;
-import static gamemechanics.Broadcast.ENEMY_LOCATION_CHANNEL;
 import static gamemechanics.Util.*;
 
 public strictfp class Soldier {
@@ -101,9 +101,7 @@ public strictfp class Soldier {
 
 	public static void handleEnemys() throws GameActionException {
 		RobotInfo[] robots = Sensor.getEnemy();
-		if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
-			rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
-		}
+		Broadcast.broadcastEnemySeen();
 		shootWithAngle = false;
 
 		// And we have enough bullets, and haven't attacked yet this

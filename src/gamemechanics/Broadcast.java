@@ -1,8 +1,10 @@
 package gamemechanics;
 
 import battlecode.common.GameActionException;
+import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 import static thecat.RobotPlayer.rc;
+import static gamemechanics.Util.encode;
 import static gamemechanics.Util.isTurnEven;
 
 public strictfp class Broadcast {
@@ -21,6 +23,15 @@ public strictfp class Broadcast {
 	public static final int STARTING_GARDENER_BUILD_CHANNEL = 8;
 	public static final int ENEMY_ARCHONS_DESTROYED_CHANNEL = 9;
 	public static final int SCOUT_GOOD_CHANNEL = 10;
+	
+	public static void broadcastEnemySeen() throws GameActionException{
+		RobotInfo[] robots = Sensor.getEnemy();
+		if(robots.length >= 1 && (robots[0].type != RobotType.ARCHON||rc.getRoundNum()>500) && robots[0].getType() != RobotType.SCOUT){
+			if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
+				rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
+			}
+		}
+	}
 	
 	/**
 	 * Returns the Number of Gardeners who where alive last Turn.

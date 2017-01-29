@@ -1,12 +1,10 @@
 package robots;
 
-import static gamemechanics.Broadcast.ENEMY_LOCATION_CHANNEL;
 import static gamemechanics.Util.canShootBulletTo;
 import static gamemechanics.Util.canShootPentandTo;
 import static gamemechanics.Util.canShootTriadTo;
 import static gamemechanics.Util.checkWinCondition;
 import static gamemechanics.Util.dodge;
-import static gamemechanics.Util.encode;
 import static gamemechanics.Util.getWanderMapDirection;
 import static gamemechanics.Util.tryMove;
 import static thecat.RobotPlayer.rc;
@@ -17,6 +15,7 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
+import gamemechanics.Broadcast;
 import gamemechanics.Debug;
 import gamemechanics.NeutralTrees;
 import gamemechanics.Sensor;
@@ -43,10 +42,7 @@ public strictfp class Tank {
 
 				// If there are some...
 				if (robots.length > 0) {
-					if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
-						rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
-					}
-
+					Broadcast.broadcastEnemySeen();
 					// And we have enough bullets, and haven't attacked yet this
 					// turn...
 					// If there is a robot, move towards it
