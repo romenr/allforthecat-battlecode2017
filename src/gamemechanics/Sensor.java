@@ -13,7 +13,6 @@ public strictfp class Sensor {
 	private static final int NUM_ROUNDS = 2;
 	private static final int SENSE_ALL = -1;
 	private static int index = 0;
-	private static int lasti = 0;
 	private static RobotInfo[][] enemyRobotInfos = new RobotInfo[NUM_ROUNDS][];
 	private static RobotInfo[][] alliedRobotInfos = new RobotInfo[NUM_ROUNDS][];
 	private static TreeInfo[][] treeInfos = new TreeInfo[NUM_ROUNDS][];
@@ -22,7 +21,6 @@ public strictfp class Sensor {
 	private static Team enemy = allied.opponent();
 	
 	public static void updateSensorData(){
-		lasti = index;
 		index = (index + 1) % NUM_ROUNDS;
 		enemyRobotInfos[index] = rc.senseNearbyRobots(SENSE_ALL, enemy);
 		alliedRobotInfos[index] = rc.senseNearbyRobots(SENSE_ALL, allied);

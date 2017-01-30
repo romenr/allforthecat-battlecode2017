@@ -1,7 +1,6 @@
 package thecat;
 
 import battlecode.common.*;
-import gamemechanics.Debug;
 import robots.*;
 
 public strictfp class RobotPlayer {

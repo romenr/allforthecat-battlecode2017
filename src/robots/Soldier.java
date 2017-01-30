@@ -6,7 +6,6 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
-import battlecode.common.Team;
 import gamemechanics.Debug;
 import gamemechanics.NeutralTrees;
 import gamemechanics.Sensor;
@@ -22,7 +21,6 @@ public strictfp class Soldier {
 	static boolean positive = rand.nextBoolean();
 
 	public static void run() throws GameActionException {
-		Team enemy = rc.getTeam().opponent();
 
 		// The code you want your robot to perform every round should be in this
 		// loop

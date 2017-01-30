@@ -7,7 +7,6 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
-import battlecode.common.Team;
 import battlecode.common.TreeInfo;
 import gamemechanics.Debug;
 import gamemechanics.Sensor;
