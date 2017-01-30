@@ -1,6 +1,7 @@
 package gamemechanics;
 
 import battlecode.common.BulletInfo;
+import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
@@ -66,6 +67,10 @@ public strictfp class Sensor {
 	
 	public static TreeInfo getTree(int i){
 		return treeInfos[index][i];
+	}
+	
+	public static boolean isScoutGood() throws GameActionException{
+		return rc.readBroadcast(Broadcast.SCOUT_GOOD_CHANNEL) == 1;
 	}
 	
 }

@@ -19,6 +19,9 @@ public strictfp class NeutralTrees {
 		for (TreeInfo tree : trees) {
 			if (tree.containedBullets > 0) {
 				rc.shake(tree.getID());
+				if(rc.readBroadcast(Broadcast.SCOUT_GOOD_CHANNEL) == 0){
+					rc.broadcast(Broadcast.SCOUT_GOOD_CHANNEL, 1);
+				}
 				return tree.getID();
 			}
 		}

@@ -12,7 +12,6 @@ import gamemechanics.Debug;
 import gamemechanics.Sensor;
 
 import static thecat.RobotPlayer.rc;
-import static gamemechanics.Broadcast.ENEMY_LOCATION_CHANNEL;
 import static gamemechanics.Util.*;
 import static gamemechanics.Debug.*;
 import static gamemechanics.NeutralTrees.shakeBulletTree;
@@ -25,6 +24,9 @@ public strictfp class Scout {
 	static int increaseRadius = 0;
 	static float bulletAwarnesRadius = rc.getType().bodyRadius + rc.getType().strideRadius + RobotType.TANK.bulletSpeed;
 	static RobotInfo scout = null;
+	private static int wanderTime;
+	private static Direction explore;
+	private static MapLocation exploreLocation;
 
 	public static void run() {
 		protect = getNearestInitialArchonLocation(rc.getTeam());
@@ -38,123 +40,29 @@ public strictfp class Scout {
 				checkWinCondition();
 
 				// Trees before Movement
-				debug_colorBulletTrees();
 				Sensor.updateSensorData();
-				shakeBulletTree();
+				debug_colorBulletTrees();
+				
 				RobotInfo[] robots = Sensor.getEnemy();
-				if (robots.length > 0 && tryToKillEnemyScout(robots)) {
-					debug_println("Fight!");
-				} else if (robots.length > 0) {
-					if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
-						rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
-					}
+				if(robots.length > 0 && robots[0].location.distanceTo(rc.getLocation()) < 8){
+					tryMove(robots[0].location.directionTo(rc.getLocation()));
+				}else if (tryShakeBulletTree()) {
 
-					MapLocation myLocation = rc.getLocation();
-					MapLocation enemyLocation = robots[0].getLocation();
-					Direction toEnemy = myLocation.directionTo(enemyLocation);
-					int shootAt = 0;
-					switch (robots[0].type) {
-					case GARDENER:
-					case SCOUT:
-						if(!dodge()){
-							tryMove(toEnemy);
-						}
-						break;
-					case SOLDIER:
-					case TANK:
-					case LUMBERJACK:
-					case ARCHON:
-						if(!dodge()){
-							tryMove(toEnemy.opposite());
-						}
-						break;
-					default:
-						break;
+				} else {
+					wanderTime++;
+					// Don't try to long
+					if (wanderTime > 60) {
+						exploreLocation = null;
 					}
-					while (shootAt < robots.length) {
-						Direction shootTo = rc.getLocation().directionTo(robots[shootAt].location);
-						if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
-							rc.firePentadShot(shootTo);
-							break;
-						}
-						if (rc.canFireTriadShot() && canShootTriadTo(shootTo)) {
-							rc.fireTriadShot(shootTo);
-							break;
-						}
-						if (rc.canFireSingleShot() && canShootBulletTo(shootTo)) {
-							rc.fireSingleShot(shootTo);
-							break;
-						}
-						shootAt++;
+					// Search enemy's
+					if (exploreLocation == null) {
+						explore = randomDirection();
+						exploreLocation = rc.getLocation().add(explore, 20);
+						wanderTime = 0;
 					}
-				} else if (tryShakeBulletTree()) {
-					debug_println("Moved to Tree");
-				} else if(Math.random() < 0.5 && tryMove(protect.directionTo(rc.getLocation()))){
-					debug_println("Increased radius");
-				}else{
-					// try to Move a Circle around protect the point
-					if (increaseRadius > 0) {
-						if (tryMove(rc.getLocation().directionTo(protect).opposite())) {
-							debug_println("Move away from protect");
-							increaseRadius++;
-							if (increaseRadius == 4) {
-								increaseRadius = 0;
-							}
-						} else {
-							increaseRadius = 0;
-							// Try Moving counter clock whise
-							MapLocation target = moveCircleAround(protect, rc.getLocation(), positive);
-							Direction toTarget = rc.getLocation().directionTo(target);
-							if (tryMove(toTarget)) {
-								debug_println("-Circular Move");
-							} else {
-								// give up
-								debug_println("I give up im stuck D:");
-							}
-						}
-					} else {
-						MapLocation target = moveCircleAround(protect, rc.getLocation(), positive);
-						Direction toTarget = rc.getLocation().directionTo(target);
-						if (rc.canSenseLocation(target) && rc.onTheMap(target)) {
-							if (tryMove(toTarget)) {
-								debug_println("Circular Move");
-							} else {
-								// Stuck change Direction and try again
-								positive = !positive;
-								target = moveCircleAround(protect, rc.getLocation(), positive);
-								toTarget = rc.getLocation().directionTo(target);
-								if (tryMove(toTarget)) {
-									debug_println("-Circular Move");
-									// Try to move to protect
-								} else if (tryMove(rc.getLocation().directionTo(protect))) {
-									debug_println("Move to protect");
-									// Try to move away from protect
-								} else if (tryMove(rc.getLocation().directionTo(protect).opposite())) {
-									debug_println("Move away from protect");
-								} else {
-									// give up
-									debug_println("I give up im stuck D:");
-								}
-							}
-						} else {
-							positive = !positive;
-							if (tryMove(rc.getLocation().directionTo(protect).opposite())) {
-								debug_println("Move away from protect");
-								increaseRadius = 1;
-							} else {
-								// Try Moving counter clock whise
-								target = moveCircleAround(protect, rc.getLocation(), positive);
-								toTarget = rc.getLocation().directionTo(target);
-								if (tryMove(toTarget)) {
-									debug_println("-Circular Move");
-								} else {
-									// give up
-									debug_println("I give up im stuck D:");
-								}
-							}
-						}
-					}
+					tryMove(rc.getLocation().directionTo(exploreLocation));
 				}
+				shakeBulletTree();
 
 				// Trees after Movement
 				debug_colorBulletTrees();
