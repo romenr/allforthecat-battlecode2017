@@ -68,7 +68,7 @@ public class Debug {
 		}else{
 			System.out.println("Bytecode left " + Clock.getBytecodesLeft());
 		}
-		monitorByteCodeLimitLastCallRoundNum = rc.getRoundNum();
+		monitorByteCodeLimitLastCallRoundNum = rc.getRoundNum() + 1;
 	}
 
 	public static void debug_printBulletsFired() {

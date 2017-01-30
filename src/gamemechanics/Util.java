@@ -687,18 +687,35 @@ public strictfp class Util {
 		return willCollideWith(dir,
 				rc.getLocation().add(dir, rc.getType().bodyRadius + GameConstants.BULLET_SPAWN_OFFSET), Team.NEUTRAL);
 	}
+	public static Boolean[] canShootBullet;
+	public static int lastUpdateRound = -1;
+	public static final int NUMBEROFDIRS = 360;
+	
+	public static void initCanShootBullet(){
+		if(rc.getRoundNum() != lastUpdateRound){
+			canShootBullet = new Boolean[NUMBEROFDIRS];
+			lastUpdateRound = rc.getRoundNum();
+		}
+	}
 
 	public static boolean canShootBulletTo(Direction dir) {
+		initCanShootBullet();
+		int direction = (int)(dir.getAngleDegrees()) + 180;
+		System.out.println(direction);
+		if(canShootBullet[direction] != null) return canShootBullet[direction];
 		MapLocation location = rc.getLocation().add(dir, rc.getType().bodyRadius + GameConstants.BULLET_SPAWN_OFFSET);
 		float ally = willCollideWith(dir, location, rc.getTeam());
 		float enemy = willCollideWith(dir, location, rc.getTeam().opponent());
 		float tree = willCollideWith(dir, location, Team.NEUTRAL);
-		if (enemy == 0)
+		if (enemy == 0){
+			canShootBullet[direction] = false;
 			return false;
-		if (ally == 0 && tree == 0)
+		}
+		if ((ally == 0 && tree == 0)||(ally == 0 && enemy <= tree)){
+			canShootBullet[direction] = true;
 			return true;
-		if (ally == 0 && enemy <= tree)
-			return true;
+		}
+		canShootBullet[direction] = enemy < ally;
 		return enemy < ally;
 	}
 
