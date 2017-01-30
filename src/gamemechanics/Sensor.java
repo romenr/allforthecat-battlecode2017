@@ -28,6 +28,10 @@ public strictfp class Sensor {
 		bulletInfos = rc.senseNearbyBullets();
 	}
 	
+	public static void updateEnemyInfo(){
+		enemyRobotInfos[index] = rc.senseNearbyRobots(SENSE_ALL, enemy);
+	}
+	
 	public static TreeInfo[] getTreeInfos(){
 		return treeInfos[index];
 	}

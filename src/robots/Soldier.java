@@ -19,6 +19,7 @@ public strictfp class Soldier {
 
 	static MapLocation goal;
 	static boolean positive = rand.nextBoolean();
+	static boolean handleEnemys;
 
 	public static void run() throws GameActionException {
 
@@ -37,70 +38,11 @@ public strictfp class Soldier {
 				// See if there are any nearby enemy robots
 				RobotInfo[] robots = Sensor.getEnemy();
 				BulletInfo[] bulletInfos = Sensor.getBulletInfos();
-
+				handleEnemys = false;
 				// If there are some...
 				if (robots.length > 0) {
-					if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
-						rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
-					}
-
-					// And we have enough bullets, and haven't attacked yet this
-					// turn...
-					// If there is a robot, move towards it
-
-					MapLocation myLocation = rc.getLocation();
-					MapLocation enemyLocation = robots[0].getLocation();
-					Direction toEnemy = myLocation.directionTo(enemyLocation);
-					int shootAt = 0;
-					boolean shootMoreThanNeeded = false;
-
-					Debug.debug_startCountingBytecode("Movement");
-					switch (robots[0].type) {
-					case LUMBERJACK:
-						if (rc.getLocation().distanceTo(robots[0].getLocation()) < 5.6f) {
-							tryMove(toEnemy.opposite());
-						} else {
-							tryMove(toEnemy);
-						}
-						break;
-					case GARDENER:
-					case SCOUT:
-						tryMove(toEnemy);
-						break;
-					case SOLDIER:
-						shootMoreThanNeeded = true;
-					case TANK:
-						if (rc.getLocation().distanceTo(robots[0].getLocation()) > 5.9) {
-							tryMove(toEnemy);
-						} else {
-							if (!dodge()) {
-								if (!tryMove(toEnemy.rotateLeftDegrees(135))) {
-									tryMove(toEnemy.rotateRightDegrees(135));
-								}
-							}
-						}
-						break;
-					case ARCHON:
-						if (robots.length > 1) {
-							tryMove(rc.getLocation().directionTo(robots[1].getLocation()));
-						} else {
-							tryMove(toEnemy);
-						}
-					default:
-						break;
-					}
-					while (shootAt < robots.length) {
-						Direction shootTo = rc.getLocation().directionTo(robots[shootAt].location);
-						if (rc.canFireTriadShot() && (canShootTriadTo(shootTo, shootMoreThanNeeded ? 0 : 1))) {
-							rc.fireTriadShot(shootTo);
-							break;
-						}
-						if (rc.canFireSingleShot() && canShootBulletTo(shootTo)) {
-							rc.fireSingleShot(shootTo);
-							break;
-						}
-						shootAt++;
-					}
+					handleEnemys();
+					handleEnemys = true;
 				} else if (bulletInfos.length > 0 && dodge()) {
 					// Dodged bullet
 				} else {
@@ -113,6 +55,14 @@ public strictfp class Soldier {
 						}
 					}
 				}
+				if(!handleEnemys){
+					Sensor.updateEnemyInfo();
+					robots = Sensor.getEnemy();
+					if (robots.length > 0) {
+						handleEnemys();
+					}
+				}
+				
 				debug_drawPath();
 
 				NeutralTrees.shakeBulletTree();
@@ -126,6 +76,72 @@ public strictfp class Soldier {
 				System.out.println("Soldier Exception");
 				e.printStackTrace();
 			}
+		}
+	}
+	
+	public static void handleEnemys() throws GameActionException{
+		RobotInfo[] robots = Sensor.getEnemy();
+		if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
+			rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
+		}
+
+		// And we have enough bullets, and haven't attacked yet this
+		// turn...
+		// If there is a robot, move towards it
+
+		MapLocation myLocation = rc.getLocation();
+		MapLocation enemyLocation = robots[0].getLocation();
+		Direction toEnemy = myLocation.directionTo(enemyLocation);
+		int shootAt = 0;
+		boolean shootMoreThanNeeded = false;
+		if(!rc.hasMoved()){
+			Debug.debug_startCountingBytecode("Movement");
+			switch (robots[0].type) {
+			case LUMBERJACK:
+				if (rc.getLocation().distanceTo(robots[0].getLocation()) < 5.6f) {
+					tryMove(toEnemy.opposite());
+				} else {
+					tryMove(toEnemy);
+				}
+				break;
+			case GARDENER:
+			case SCOUT:
+				tryMove(toEnemy);
+				break;
+			case SOLDIER:
+				shootMoreThanNeeded = true;
+			case TANK:
+				if (rc.getLocation().distanceTo(robots[0].getLocation()) > 5.9) {
+					tryMove(toEnemy);
+				} else {
+					if (!dodge()) {
+						if (!tryMove(toEnemy.rotateLeftDegrees(135))) {
+							tryMove(toEnemy.rotateRightDegrees(135));
+						}
+					}
+				}
+				break;
+			case ARCHON:
+				if (robots.length > 1) {
+					tryMove(rc.getLocation().directionTo(robots[1].getLocation()));
+				} else {
+					tryMove(toEnemy);
+				}
+			default:
+				break;
+			}
+		}
+		while (shootAt < robots.length) {
+			Direction shootTo = rc.getLocation().directionTo(robots[shootAt].location);
+			if (rc.canFireTriadShot() && (canShootTriadTo(shootTo, shootMoreThanNeeded ? 0 : 1))) {
+				rc.fireTriadShot(shootTo);
+				break;
+			}
+			if (rc.canFireSingleShot() && canShootBulletTo(shootTo)) {
+				rc.fireSingleShot(shootTo);
+				break;
+			}
+			shootAt++;
 		}
 	}
 
