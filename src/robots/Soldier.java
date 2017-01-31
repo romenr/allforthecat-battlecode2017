@@ -4,8 +4,10 @@ import battlecode.common.BulletInfo;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 import gamemechanics.Debug;
 import gamemechanics.NeutralTrees;
 import gamemechanics.Sensor;
@@ -20,6 +22,22 @@ public strictfp class Soldier {
 	static MapLocation goal;
 	static boolean positive = rand.nextBoolean();
 	static boolean handleEnemys;
+
+	// 1v1 Dodge Triad constants Pentad seems used little and its a bother
+	// looking what the enemy is doing
+	static final float ALPHA = (float) Math.toRadians(GameConstants.TRIAD_SPREAD_DEGREES);
+	static final float X = 2 * RobotType.SOLDIER.bodyRadius;
+	static final float D = (float) (X / Math.tan(ALPHA));
+	static final float SIN_ALPHA = (float) (Math.sin(ALPHA));
+	static final float Q = (float) (SIN_ALPHA * Math.tan(ALPHA));
+	static final float Y_OFFSET = 0.2f;
+	static final float X_OFFSET = Q / 2;
+	static final float DISTANCE_TO_ENEMY = D + SIN_ALPHA + Y_OFFSET*2;
+	static final float SIDESTEP = 1 + 0.03f;
+
+	static MapLocation dodgeSpot;
+	static boolean dodging = false;
+	static boolean stop = false;
 
 	public static void run() throws GameActionException {
 
@@ -55,14 +73,14 @@ public strictfp class Soldier {
 						}
 					}
 				}
-				if(!handleEnemys){
+				if (!handleEnemys) {
 					Sensor.updateEnemyInfo();
 					robots = Sensor.getEnemy();
 					if (robots.length > 0) {
 						handleEnemys();
 					}
 				}
-				
+
 				debug_drawPath();
 
 				NeutralTrees.shakeBulletTree();
@@ -78,8 +96,8 @@ public strictfp class Soldier {
 			}
 		}
 	}
-	
-	public static void handleEnemys() throws GameActionException{
+
+	public static void handleEnemys() throws GameActionException {
 		RobotInfo[] robots = Sensor.getEnemy();
 		if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
 			rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
@@ -94,7 +112,7 @@ public strictfp class Soldier {
 		Direction toEnemy = myLocation.directionTo(enemyLocation);
 		int shootAt = 0;
 		boolean shootMoreThanNeeded = false;
-		if(!rc.hasMoved()){
+		if (!rc.hasMoved()) {
 			Debug.debug_startCountingBytecode("Movement");
 			switch (robots[0].type) {
 			case LUMBERJACK:
@@ -111,13 +129,12 @@ public strictfp class Soldier {
 			case SOLDIER:
 				shootMoreThanNeeded = true;
 			case TANK:
-				if (rc.getLocation().distanceTo(robots[0].getLocation()) > 5.9) {
-					tryMove(toEnemy);
-				} else {
-					if (!dodge()) {
-						if (!tryMove(toEnemy.rotateLeftDegrees(135))) {
-							tryMove(toEnemy.rotateRightDegrees(135));
+				if(!dodgeTriad(enemyLocation)){
+					if (!Util.moveTo(Util.getGeneralEnemyLocation())) {
+						if (!tryMove(getWanderMapDirection())) {
+							// System.out.println("I did not Move");
 						}
+
 					}
 				}
 				break;
@@ -147,6 +164,51 @@ public strictfp class Soldier {
 			}
 			shootAt++;
 		}
+	}
+
+	public static boolean dodgeTriad(MapLocation enemy) throws GameActionException {
+		if (dodging) {
+			if(stop){
+				stop = false;
+				dodging = false;
+				return true;
+			}
+			stop = true;
+			if (rc.canMove(dodgeSpot)) {
+				rc.move(dodgeSpot);
+				return true;
+			}
+			return false;
+		} else {
+			dodging = true;
+			Direction toMe = enemy.directionTo(rc.getLocation());
+			MapLocation dist = enemy.add(toMe, DISTANCE_TO_ENEMY);
+			MapLocation dogeLeft = dist.add(toMe.rotateRightDegrees(90), SIDESTEP);
+			MapLocation dogeRight = dist.add(toMe.rotateLeftDegrees(90), SIDESTEP);
+			if(canMoveTo(dogeRight)){
+				rc.move(rc.getLocation().directionTo(dogeRight), rc.getLocation().distanceTo(dogeRight) / 2);
+				dodgeSpot = dogeRight;
+				dodging = true;
+				return true;
+			}else{
+				if(canMoveTo(dogeLeft)){
+					rc.move(rc.getLocation().directionTo(dogeLeft), rc.getLocation().distanceTo(dogeLeft) / 2);
+					dodgeSpot = dogeLeft;
+					dodging = true;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public static boolean canMoveTo(MapLocation location) throws GameActionException {
+		if (rc.canSenseAllOfCircle(location, X) && rc.onTheMap(location, X) && rc.isCircleOccupied(location, X)) {
+			if (rc.canMove(rc.getLocation().directionTo(location), rc.getLocation().distanceTo(location) / 2)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

@@ -701,7 +701,6 @@ public strictfp class Util {
 	public static boolean canShootBulletTo(Direction dir) {
 		initCanShootBullet();
 		int direction = (int)(dir.getAngleDegrees()) + 180;
-		System.out.println(direction);
 		if(canShootBullet[direction] != null) return canShootBullet[direction];
 		MapLocation location = rc.getLocation().add(dir, rc.getType().bodyRadius + GameConstants.BULLET_SPAWN_OFFSET);
 		float ally = willCollideWith(dir, location, rc.getTeam());
