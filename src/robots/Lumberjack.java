@@ -126,6 +126,9 @@ public strictfp class Lumberjack {
 						}
 					}
 				}
+				if(!rc.hasAttacked()&&!rc.hasMoved()){
+					tryMove(randomDirection());
+				}
 
 				// Clock.yield() makes the robot wait until the next turn, then
 				// it will perform this loop again
