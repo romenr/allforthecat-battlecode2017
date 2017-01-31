@@ -84,7 +84,13 @@ public strictfp class Tank {
 						break;
 					}
 					while (shootAt < robots.length) {
-						MapLocation enemysNextLocation = Sensor.predictEnemyMovement(robots[shootAt]);
+						float distance = rc.getLocation().distanceTo(robots[shootAt].location);
+						MapLocation enemysNextLocation;
+						if(distance <= 5){
+							enemysNextLocation = Sensor.predictEnemyMovement(robots[shootAt],1);
+						}else{
+							enemysNextLocation = Sensor.predictEnemyMovement(robots[shootAt],2);
+						}
 						Direction shootTo;
 						if(enemysNextLocation != null){
 							shootTo  = rc.getLocation().directionTo(enemysNextLocation);

@@ -1,6 +1,7 @@
 package gamemechanics;
 
 import battlecode.common.BulletInfo;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
@@ -38,15 +39,18 @@ public strictfp class Sensor {
 	 * 
 	 * @param enemy
 	 *            the enemy this turn
+	 * @param rounds
+	 *            how many turns
 	 * @return null if no prediction is possible the enemy location next turn
 	 *         otherwise
 	 */
-	public static MapLocation predictEnemyMovement(RobotInfo enemy) {
-		if (enemyRobotInfos[lasti] != null){
+	public static MapLocation predictEnemyMovement(RobotInfo enemy, int rounds) {
+		if (enemyRobotInfos[lasti] != null) {
 			for (RobotInfo oldData : enemyRobotInfos[lasti]) {
 				if (enemy.getID() == oldData.getID()) {
-					return enemy.location.add(oldData.location.directionTo(enemy.location),
-							oldData.location.distanceTo(enemy.location));
+					Direction dir = oldData.location.directionTo(enemy.location);
+					float distance = rounds * oldData.location.distanceTo(enemy.location);
+					return enemy.location.add(dir, distance);
 				}
 			}
 		}
