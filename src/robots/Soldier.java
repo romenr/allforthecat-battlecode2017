@@ -210,7 +210,6 @@ public strictfp class Soldier {
 			}
 			return false;
 		} else {
-			dodging = true;
 			Direction toMe = enemy.directionTo(rc.getLocation());
 			MapLocation dist = enemy.add(toMe, DISTANCE_TO_ENEMY);
 			MapLocation dogeLeft = dist.add(toMe.rotateRightDegrees(90), SIDESTEP);

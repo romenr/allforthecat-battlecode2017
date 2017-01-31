@@ -42,10 +42,12 @@ public strictfp class Sensor {
 	 *         otherwise
 	 */
 	public static MapLocation predictEnemyMovement(RobotInfo enemy) {
-		for (RobotInfo oldData : enemyRobotInfos[lasti]) {
-			if (enemy.getID() == oldData.getID()) {
-				return enemy.location.add(oldData.location.directionTo(enemy.location),
-						oldData.location.distanceTo(enemy.location));
+		if (enemyRobotInfos[lasti] != null){
+			for (RobotInfo oldData : enemyRobotInfos[lasti]) {
+				if (enemy.getID() == oldData.getID()) {
+					return enemy.location.add(oldData.location.directionTo(enemy.location),
+							oldData.location.distanceTo(enemy.location));
+				}
 			}
 		}
 		return null;

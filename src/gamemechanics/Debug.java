@@ -9,7 +9,7 @@ import battlecode.common.RobotType;
 
 public class Debug {
 
-	private static boolean verbose = true;
+	private static boolean verbose = false;
 	private static HashMap<String, Integer> byteCodeMap = new HashMap<>();
 
 	public static void debug_startCountingBytecode(String key) {
@@ -58,15 +58,15 @@ public class Debug {
 	 * Check if the robot went past its ByteCode limit by checking round numbers
 	 */
 	public static void debug_monitorRobotByteCodeLimit() {
-		if (!verbose)
-			return;
 		if (monitorByteCodeLimitLastCallRoundNum == -1) {
 			monitorByteCodeLimitLastCallRoundNum = rc.getRoundNum();
 		}
 		if(monitorByteCodeLimitLastCallRoundNum != rc.getRoundNum()){
 			System.out.println("ERROR: exeeded Bytecode limit by " + Clock.getBytecodeNum());
 		}else{
-			System.out.println("Bytecode left " + Clock.getBytecodesLeft());
+			if (verbose){
+				System.out.println("Bytecode left " + Clock.getBytecodesLeft());
+			}
 		}
 		monitorByteCodeLimitLastCallRoundNum = rc.getRoundNum() + 1;
 	}
