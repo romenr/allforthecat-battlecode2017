@@ -89,8 +89,8 @@ public strictfp class Util {
 		}
 		// If your the last one standing donate as much as you can and hope for
 		// the best
-		if (rc.getRobotCount() == 1 && rc.getType() != RobotType.ARCHON) {
-			rc.donate((rc.getTeamBullets() / rc.getVictoryPointCost()) * rc.getVictoryPointCost());
+		if (rc.getRobotCount() == 1 && rc.getType() != RobotType.ARCHON && rc.getVictoryPointCost() >= rc.getTeamBullets()) {
+			rc.donate(rc.getVictoryPointCost());
 		}
 	}
 
