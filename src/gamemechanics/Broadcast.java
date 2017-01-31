@@ -26,7 +26,7 @@ public strictfp class Broadcast {
 	
 	public static void broadcastEnemySeen() throws GameActionException{
 		RobotInfo[] robots = Sensor.getEnemy();
-		if(robots.length >= 1 && (robots[0].type != RobotType.ARCHON||rc.getRoundNum()>500) && robots[0].getType() != RobotType.SCOUT){
+		if(robots.length >= 1 && robots[0].getType() != RobotType.SCOUT){
 			if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
 				rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
 			}
