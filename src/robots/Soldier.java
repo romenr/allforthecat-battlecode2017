@@ -31,15 +31,6 @@ public strictfp class Soldier {
 	static float distanceToEnemy;
 	static float sideStep;
 
-	public static void calculateDodgeVariables(float alpha){
-		x = 2 * RobotType.SOLDIER.bodyRadius;
-		d = (float) (x / Math.tan(alpha));
-		sinAlpha = (float) (Math.sin(alpha));
-		Y_OFFSET = 0.4f;
-		distanceToEnemy = d + sinAlpha + Y_OFFSET;
-		sideStep = 1.03f;
-	}
-	
 	static MapLocation dodgeSpot;
 	static boolean dodging = false;
 	static boolean stop = false;
@@ -47,8 +38,6 @@ public strictfp class Soldier {
 	static boolean shootWithAngle = false;
 
 	public static void run() throws GameActionException {
-		//Dodge triad TODO recalculate depending on enemy
-		calculateDodgeVariables((float) Math.toRadians(GameConstants.TRIAD_SPREAD_DEGREES));
 		// The code you want your robot to perform every round should be in this
 		// loop
 		while (true) {
@@ -69,7 +58,7 @@ public strictfp class Soldier {
 				if (robots.length > 0) {
 					handleEnemys();
 					handleEnemys = true;
-				} else if (bulletInfos.length > 0 && dodge()) {
+				} else if (bulletInfos.length > 0 && Util.dodge()) {
 					// Dodged bullet
 				} else {
 					if (!rc.hasMoved()) {
@@ -139,7 +128,7 @@ public strictfp class Soldier {
 				if(rc.getLocation().distanceTo(enemyLocation) < 3.9f){
 					shootWithAngle = true;
 				}
-				if(!dodgeTriad(enemyLocation)){
+				if(!dodge(robots[0])){
 					if (!Util.moveTo(Util.getGeneralEnemyLocation())) {
 						if (!tryMove(getWanderMapDirection())) {
 							// System.out.println("I did not Move");
@@ -200,7 +189,7 @@ public strictfp class Soldier {
 		return false;
 	}
 	
-	public static boolean dodgeTriad(MapLocation enemy) throws GameActionException {
+	public static boolean dodge(RobotInfo enemy) throws GameActionException {
 		if (dodging) {
 			if(stop){
 				stop = false;
@@ -214,8 +203,14 @@ public strictfp class Soldier {
 			}
 			return false;
 		} else {
-			Direction toMe = enemy.directionTo(rc.getLocation());
-			MapLocation dist = enemy.add(toMe, distanceToEnemy);
+			if(doseEnemyUsePentad(enemy)){
+				calculateDodgeVariables((float) Math.toRadians(GameConstants.PENTAD_SPREAD_DEGREES));
+			}else{
+				calculateDodgeVariables((float) Math.toRadians(GameConstants.TRIAD_SPREAD_DEGREES));
+			}
+			
+			Direction toMe = enemy.location.directionTo(rc.getLocation());
+			MapLocation dist = enemy.location.add(toMe, distanceToEnemy);
 			MapLocation dogeLeft = dist.add(toMe.rotateRightDegrees(90), sideStep);
 			MapLocation dogeRight = dist.add(toMe.rotateLeftDegrees(90), sideStep);
 			if(canMoveTo(dogeRight)){
@@ -235,6 +230,14 @@ public strictfp class Soldier {
 		return false;
 	}
 
+	private static boolean doseEnemyUsePentad(RobotInfo enemy) {
+		float r = enemy.type.bodyRadius + GameConstants.BULLET_SPAWN_OFFSET + 0.01f;
+		if(rc.canSenseAllOfCircle(enemy.location, r)){
+			return rc.senseNearbyBullets(enemy.location, r).length == 5;
+		}
+		return false;
+	}
+
 	public static boolean canMoveTo(MapLocation location) throws GameActionException {
 		if (rc.canSenseAllOfCircle(location, x) && rc.onTheMap(location, x) && rc.isCircleOccupied(location, x)) {
 			if (rc.canMove(rc.getLocation().directionTo(location), rc.getLocation().distanceTo(location) / 2)) {
@@ -242,6 +245,15 @@ public strictfp class Soldier {
 			}
 		}
 		return false;
+	}
+	
+	public static void calculateDodgeVariables(float alpha){
+		x = 2 * RobotType.SOLDIER.bodyRadius;
+		d = (float) (x / Math.tan(alpha));
+		sinAlpha = (float) (Math.sin(alpha));
+		Y_OFFSET = 0.4f;
+		distanceToEnemy = d + sinAlpha + Y_OFFSET;
+		sideStep = 1.03f;
 	}
 
 }
