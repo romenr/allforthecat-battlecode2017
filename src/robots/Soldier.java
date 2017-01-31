@@ -149,7 +149,13 @@ public strictfp class Soldier {
 			}
 		}
 		while (shootAt < robots.length) {
-			Direction shootTo = rc.getLocation().directionTo(robots[shootAt].location);
+			MapLocation enemysNextLocation = Sensor.predictEnemyMovement(robots[shootAt]);
+			Direction shootTo;
+			if(enemysNextLocation != null){
+				shootTo  = rc.getLocation().directionTo(enemysNextLocation);
+			}else{
+				shootTo  = rc.getLocation().directionTo(robots[shootAt].location);
+			}
 			if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
 				rc.firePentadShot(shootTo);
 				break;
