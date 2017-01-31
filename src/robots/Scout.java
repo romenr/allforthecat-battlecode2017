@@ -51,7 +51,7 @@ public strictfp class Scout {
 				} else {
 					wanderTime++;
 					// Don't try to long
-					if (wanderTime > 60) {
+					if (wanderTime > 20) {
 						exploreLocation = null;
 					}
 					// Search enemy's
