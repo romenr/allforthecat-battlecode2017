@@ -38,6 +38,8 @@ public strictfp class Soldier {
 	static MapLocation dodgeSpot;
 	static boolean dodging = false;
 	static boolean stop = false;
+	
+	static boolean shootWithAngle = false;
 
 	public static void run() throws GameActionException {
 
@@ -102,6 +104,7 @@ public strictfp class Soldier {
 		if (rc.readBroadcast(ENEMY_LOCATION_CHANNEL) == 0) {
 			rc.broadcast(ENEMY_LOCATION_CHANNEL, encode(robots[0].getLocation()));
 		}
+		shootWithAngle = false;
 
 		// And we have enough bullets, and haven't attacked yet this
 		// turn...
@@ -129,6 +132,9 @@ public strictfp class Soldier {
 			case SOLDIER:
 				shootMoreThanNeeded = true;
 			case TANK:
+				if(rc.getLocation().distanceTo(enemyLocation) < 3.9f){
+					shootWithAngle = true;
+				}
 				if(!dodgeTriad(enemyLocation)){
 					if (!Util.moveTo(Util.getGeneralEnemyLocation())) {
 						if (!tryMove(getWanderMapDirection())) {
@@ -156,22 +162,40 @@ public strictfp class Soldier {
 			}else{
 				shootTo  = rc.getLocation().directionTo(robots[shootAt].location);
 			}
-			if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
-				rc.firePentadShot(shootTo);
-				break;
+			if(shootWithAngle){
+				shootWithAngle = false;
+				Direction left = shootTo.rotateLeftDegrees(10);
+				if(shoot(left, shootMoreThanNeeded)){
+					break;
+				}
+				Direction right = shootTo.rotateRightDegrees(10);
+				if(shoot(right, shootMoreThanNeeded)){
+					break;
+				}
 			}
-			if (rc.canFireTriadShot() && (canShootTriadTo(shootTo, shootMoreThanNeeded ? 0 : 1))) {
-				rc.fireTriadShot(shootTo);
-				break;
-			}
-			if (rc.canFireSingleShot() && canShootBulletTo(shootTo)) {
-				rc.fireSingleShot(shootTo);
+			if(shoot(shootTo, shootMoreThanNeeded)){
 				break;
 			}
 			shootAt++;
 		}
 	}
 
+	public static boolean shoot(Direction shootTo, boolean shootMoreThanNeeded) throws GameActionException{
+		if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
+			rc.firePentadShot(shootTo);
+			return true;
+		}
+		if (rc.canFireTriadShot() && (canShootTriadTo(shootTo, shootMoreThanNeeded ? 0 : 1))) {
+			rc.fireTriadShot(shootTo);
+			return true;
+		}
+		if (rc.canFireSingleShot() && canShootBulletTo(shootTo)) {
+			rc.fireSingleShot(shootTo);
+			return true;
+		}
+		return false;
+	}
+	
 	public static boolean dodgeTriad(MapLocation enemy) throws GameActionException {
 		if (dodging) {
 			if(stop){
