@@ -34,7 +34,7 @@ public strictfp class Soldier {
 	static MapLocation dodgeSpot;
 	static boolean dodging = false;
 	static boolean stop = false;
-	
+
 	static boolean shootWithAngle = false;
 
 	public static void run() throws GameActionException {
@@ -58,7 +58,7 @@ public strictfp class Soldier {
 				if (robots.length > 0) {
 					handleEnemys();
 					handleEnemys = true;
-				} else if (bulletInfos.length > 0 && Util.dodge()) {
+				} else if (bulletInfos.length > 0 && (dodge(null) || Util.dodge())) {
 					// Dodged bullet
 				} else {
 					if (!rc.hasMoved()) {
@@ -125,10 +125,10 @@ public strictfp class Soldier {
 			case SOLDIER:
 				shootMoreThanNeeded = true;
 			case TANK:
-				if(rc.getLocation().distanceTo(enemyLocation) < 3.9f){
+				if (rc.getLocation().distanceTo(enemyLocation) < 3.9f) {
 					shootWithAngle = true;
 				}
-				if(!dodge(robots[0])){
+				if (!dodge(robots[0])) {
 					if (!Util.moveTo(Util.getGeneralEnemyLocation())) {
 						if (!tryMove(getWanderMapDirection())) {
 							// System.out.println("I did not Move");
@@ -150,30 +150,30 @@ public strictfp class Soldier {
 		while (shootAt < robots.length) {
 			MapLocation enemysNextLocation = Sensor.predictEnemyMovement(robots[shootAt]);
 			Direction shootTo;
-			if(enemysNextLocation != null){
-				shootTo  = rc.getLocation().directionTo(enemysNextLocation);
-			}else{
-				shootTo  = rc.getLocation().directionTo(robots[shootAt].location);
+			if (enemysNextLocation != null) {
+				shootTo = rc.getLocation().directionTo(enemysNextLocation);
+			} else {
+				shootTo = rc.getLocation().directionTo(robots[shootAt].location);
 			}
-			if(shootWithAngle){
+			if (shootWithAngle) {
 				shootWithAngle = false;
 				Direction left = shootTo.rotateLeftDegrees(10);
-				if(shoot(left, shootMoreThanNeeded)){
+				if (shoot(left, shootMoreThanNeeded)) {
 					break;
 				}
 				Direction right = shootTo.rotateRightDegrees(10);
-				if(shoot(right, shootMoreThanNeeded)){
+				if (shoot(right, shootMoreThanNeeded)) {
 					break;
 				}
 			}
-			if(shoot(shootTo, shootMoreThanNeeded)){
+			if (shoot(shootTo, shootMoreThanNeeded)) {
 				break;
 			}
 			shootAt++;
 		}
 	}
 
-	public static boolean shoot(Direction shootTo, boolean shootMoreThanNeeded) throws GameActionException{
+	public static boolean shoot(Direction shootTo, boolean shootMoreThanNeeded) throws GameActionException {
 		if (rc.canFirePentadShot() && canShootPentandTo(shootTo)) {
 			rc.firePentadShot(shootTo);
 			return true;
@@ -188,10 +188,10 @@ public strictfp class Soldier {
 		}
 		return false;
 	}
-	
+
 	public static boolean dodge(RobotInfo enemy) throws GameActionException {
 		if (dodging) {
-			if(stop){
+			if (stop) {
 				stop = false;
 				dodging = false;
 				return true;
@@ -202,24 +202,24 @@ public strictfp class Soldier {
 				return true;
 			}
 			return false;
-		} else {
-			if(doseEnemyUsePentad(enemy)){
+		} else if (enemy != null) {
+			if (doseEnemyUsePentad(enemy)) {
 				calculateDodgeVariables((float) Math.toRadians(GameConstants.PENTAD_SPREAD_DEGREES));
-			}else{
+			} else {
 				calculateDodgeVariables((float) Math.toRadians(GameConstants.TRIAD_SPREAD_DEGREES));
 			}
-			
+
 			Direction toMe = enemy.location.directionTo(rc.getLocation());
 			MapLocation dist = enemy.location.add(toMe, distanceToEnemy);
 			MapLocation dogeLeft = dist.add(toMe.rotateRightDegrees(90), sideStep);
 			MapLocation dogeRight = dist.add(toMe.rotateLeftDegrees(90), sideStep);
-			if(canMoveTo(dogeRight)){
+			if (canMoveTo(dogeRight)) {
 				rc.move(rc.getLocation().directionTo(dogeRight), rc.getLocation().distanceTo(dogeRight) / 2);
 				dodgeSpot = dogeRight;
 				dodging = true;
 				return true;
-			}else{
-				if(canMoveTo(dogeLeft)){
+			} else {
+				if (canMoveTo(dogeLeft)) {
 					rc.move(rc.getLocation().directionTo(dogeLeft), rc.getLocation().distanceTo(dogeLeft) / 2);
 					dodgeSpot = dogeLeft;
 					dodging = true;
@@ -232,10 +232,7 @@ public strictfp class Soldier {
 
 	private static boolean doseEnemyUsePentad(RobotInfo enemy) {
 		float r = enemy.type.bodyRadius + GameConstants.BULLET_SPAWN_OFFSET + 0.01f;
-		if(rc.canSenseAllOfCircle(enemy.location, r)){
-			return rc.senseNearbyBullets(enemy.location, r).length == 5;
-		}
-		return false;
+		return rc.senseNearbyBullets(enemy.location, r).length == 5;
 	}
 
 	public static boolean canMoveTo(MapLocation location) throws GameActionException {
@@ -246,12 +243,12 @@ public strictfp class Soldier {
 		}
 		return false;
 	}
-	
-	public static void calculateDodgeVariables(float alpha){
+
+	public static void calculateDodgeVariables(float alpha) {
 		x = 2 * RobotType.SOLDIER.bodyRadius;
 		d = (float) (x / Math.tan(alpha));
 		sinAlpha = (float) (Math.sin(alpha));
-		Y_OFFSET = 0.4f;
+		Y_OFFSET = 0.2f;
 		distanceToEnemy = d + sinAlpha + Y_OFFSET;
 		sideStep = 1.03f;
 	}
