@@ -119,6 +119,7 @@ public strictfp class Soldier {
 				}
 				break;
 			case GARDENER:
+				shootMoreThanNeeded = true;
 			case SCOUT:
 				tryMove(toEnemy);
 				break;

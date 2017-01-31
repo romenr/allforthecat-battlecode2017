@@ -13,7 +13,6 @@ import gamemechanics.Sensor;
 
 import static thecat.RobotPlayer.rc;
 import static gamemechanics.Util.*;
-import static gamemechanics.Debug.*;
 import static gamemechanics.NeutralTrees.shakeBulletTree;
 
 public strictfp class Scout {
