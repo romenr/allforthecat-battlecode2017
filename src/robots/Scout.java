@@ -116,7 +116,6 @@ public strictfp class Scout {
 					// If we can reach and shake the Tree just shake it
 					if (rc.canShake(tree.getID())) {
 						rc.shake(tree.getID());
-						debug_println("Shake Tree for " + tree.getContainedBullets() + " Bullets");
 						continue;
 					}
 					// Write up the best Tree
@@ -133,7 +132,6 @@ public strictfp class Scout {
 			moved = tryMove(rc.getLocation().directionTo(bulletTree.getLocation()));
 			if (rc.canShake(bulletTree.getID())) {
 				rc.shake(bulletTree.getID());
-				debug_println("Shake Tree for " + bulletTree.getContainedBullets() + " Bullets");
 				bulletTree = null;
 			}
 		}
