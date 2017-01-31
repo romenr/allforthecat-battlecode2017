@@ -43,11 +43,11 @@ public strictfp class Scout {
 				debug_colorBulletTrees();
 				
 				RobotInfo[] robots = Sensor.getEnemy();
-				if(robots.length > 0 && robots[0].location.distanceTo(rc.getLocation()) < 8){
-					tryMove(robots[0].location.directionTo(rc.getLocation()));
-				}else if (tryShakeBulletTree()) {
+				if (tryShakeBulletTree()) {
 
-				} else {
+				} else if(robots.length > 0 && robots[0].location.distanceTo(rc.getLocation()) < 8){
+					tryMove(robots[0].location.directionTo(rc.getLocation()));
+				}else {
 					wanderTime++;
 					// Don't try to long
 					if (wanderTime > 20) {
